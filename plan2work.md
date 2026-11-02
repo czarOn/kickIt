@@ -169,3 +169,13 @@ Warto od początku utrzymywać osobne interfejsy dla źródła sterowania (klawi
 4. Dodać test Gamepad API oraz sterowanie klawiaturą jako niezawodny wariant zapasowy.
 5. Zbudować jedną scenę i przeprowadzić test z kilkoma osobami z klubu.
 6. Dopiero po pozytywnym teście zdecydować, czy następnym krokiem jest więcej lekcji, czy prototyp śledzenia pozy na iPhonie.
+
+## 9. Relacja gry do platformy SaaS
+
+Dokumenty [taekwondo_saas_platform_architecture_strategy.md](./taekwondo_saas_platform_architecture_strategy.md) i [taekwondo_saas_architecture_english.md](./taekwondo_saas_architecture_english.md) opisują platformę dla szkół: wideo multi-cam, analizę kopnięć i zarządzanie klubem. Szczegółowe porównanie ze stanem obecnym jest w [gap_analysis.md](./gap_analysis.md).
+
+- **Gra jest modułem dla uczniów** ("trening w domu między zajęciami"), a nie osobnym produktem. Wspólne elementy to profil ucznia, lista kopnięć z nazwami koreańskimi, szablony techniki i wyniki.
+- **Analiza z kamery (`pose.html`)** jest zalążkiem modułu analizy kopnięć z platformy i wyprzedza harmonogram koncepcji (tam MediaPipe pojawia się w fazie 3).
+- **Wspólny model danych:** uczeń → kopnięcie → wynik/nagranie. Najpierw zapisywany lokalnie i eksportowany do JSON, później przeniesiony do bazy.
+- **Kolejność:** (1) odtwarzacz multi-angle w przeglądarce po nagraniach 3 kamerami, (2) wspólny model danych, (3) po walidacji w 2–3 klubach backend i konta (Supabase), (4) zgody rodziców i prywatność przed jakimkolwiek wgraniem danych do chmury.
+- **Otwarta decyzja:** przeglądarka (PWA) czy natywna aplikacja iOS dla synchronizacji kamer; rozstrzygnąć po pierwszych nagraniach.
