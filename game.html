@@ -1,0 +1,1569 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10151d">
+    <title>TKD Training — trening dystansu</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #10151d;
+        color: #eef3f8;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        overflow: hidden;
+        background: #10151d;
+      }
+
+      #renderCanvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        outline: none;
+        touch-action: none;
+      }
+
+      .hud {
+        position: fixed;
+        z-index: 2;
+        top: 0;
+        right: 0;
+        left: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        pointer-events: none;
+        background: linear-gradient(#10151de8, #10151d00);
+      }
+
+      .brand { font-size: 15px; font-weight: 750; letter-spacing: .04em; }
+      .subtitle, .small { color: #aab8c7; font-size: 13px; }
+      .sound-toggle {
+        width: auto;
+        margin-top: 9px;
+        padding: 7px 10px;
+        border: 1px solid #ffffff20;
+        background: #10151dbd;
+        color: #eef3f8;
+        font-size: 12px;
+        pointer-events: auto;
+      }
+      .sound-toggle[aria-pressed="true"] { background: #17402a; color: #b9ffd0; }
+      .stats { display: flex; gap: 12px; }
+      .stat {
+        min-width: 88px;
+        padding: 9px 12px;
+        border: 1px solid #ffffff20;
+        border-radius: 10px;
+        background: #10151dbd;
+        text-align: center;
+      }
+      .stat strong { display: block; font-size: 19px; }
+      .stat span { color: #aab8c7; font-size: 11px; }
+
+      .lesson {
+        position: fixed;
+        z-index: 2;
+        top: 94px;
+        left: 50%;
+        width: min(520px, calc(100vw - 28px));
+        padding: 15px 20px;
+        border: 1px solid #ffffff20;
+        border-radius: 14px;
+        background: #10151dcc;
+        text-align: center;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+      .lesson h1 { margin: 0 0 5px; font-size: 18px; }
+      .lesson p { margin: 0; color: #bdc9d5; font-size: 14px; }
+      #cue { margin-top: 9px; color: #81e3a2; font-weight: 750; }
+      #cue.warning { color: #ffcf70; }
+      #cue.danger { color: #ff8c82; }
+      .range-meter {
+        width: min(390px, 100%);
+        margin: 12px auto 0;
+        text-align: left;
+      }
+      .range-track {
+        position: relative;
+        height: 12px;
+        overflow: visible;
+        border: 1px solid #ffffff20;
+        border-radius: 8px;
+        background: linear-gradient(
+          90deg,
+          #713f43 0 var(--range-min, 34.2%),
+          #286f49 var(--range-min, 34.2%) var(--range-max, 47.1%),
+          #745f35 var(--range-max, 47.1%) 100%
+        );
+      }
+      .range-marker {
+        position: absolute;
+        top: -5px;
+        left: 0%;
+        width: 4px;
+        height: 20px;
+        border: 1px solid #fff;
+        border-radius: 3px;
+        background: #f7fbff;
+        box-shadow: 0 0 8px #fff9;
+        transform: translateX(-50%);
+        transition: left 120ms linear;
+      }
+      .range-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        color: #aab8c7;
+        font-size: 11px;
+      }
+      #range-state {
+        margin-top: 5px;
+        color: #ffcf70;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+      }
+      #range-reference {
+        margin-top: 4px;
+        color: #aab8c7;
+        font-size: 11px;
+        text-align: center;
+      }
+      #range-state.good { color: #81e3a2; }
+      #range-state.close { color: #ff8c82; }
+
+      .bottom {
+        position: fixed;
+        z-index: 2;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        pointer-events: none;
+        background: linear-gradient(#10151d00, #10151de8);
+      }
+      .controls, .device {
+        max-width: 440px;
+        padding: 10px 13px;
+        border: 1px solid #ffffff20;
+        border-radius: 10px;
+        background: #10151dbd;
+      }
+      .controls { line-height: 1.8; }
+      .pad-controls { color: #eef3f8; line-height: 1.8; }
+      .device { color: #aab8c7; text-align: right; }
+      .device.connected { color: #81e3a2; }
+      .view-mode {
+        padding: 8px 11px;
+        border: 1px solid #ffffff20;
+        border-radius: 9px;
+        background: #10151dbd;
+        color: #bdc9d5;
+      }
+      kbd {
+        padding: 2px 6px;
+        border: 1px solid #526173;
+        border-radius: 5px;
+        background: #26313e;
+        color: #eef3f8;
+        font: inherit;
+        font-size: 11px;
+      }
+
+      .start-screen {
+        position: fixed;
+        z-index: 4;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: #10151d9c;
+      }
+      .start-card {
+        width: min(470px, 100%);
+        padding: 28px;
+        border: 1px solid #ffffff24;
+        border-radius: 18px;
+        background: #19222df5;
+        box-shadow: 0 24px 80px #0008;
+      }
+      .start-card h1 { margin: 0 0 8px; }
+      .start-card p { color: #bdc9d5; line-height: 1.55; }
+      .start-card ul { padding-left: 20px; color: #bdc9d5; line-height: 1.75; }
+      .combo-picker {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 7px;
+        margin: 16px 0 10px;
+      }
+      .combo-option {
+        min-width: 0;
+        margin: 0;
+        padding: 9px 5px;
+        border: 1px solid #526173;
+        background: #25313e;
+        color: #eef3f8;
+      }
+      .combo-option[aria-pressed="true"] {
+        border: 2px solid #50c878;
+        background: #17402a;
+        color: #b9ffd0;
+      }
+      .combo-description {
+        min-height: 72px;
+        margin: 0 0 12px;
+        font-size: 13px;
+      }
+      .height-setting {
+        margin: 14px 0;
+        padding: 12px;
+        border: 1px solid #ffffff20;
+        border-radius: 10px;
+        background: #10151d80;
+        text-align: left;
+      }
+      .height-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .height-setting input { width: 100%; accent-color: #50c878; }
+      .height-note { margin: 4px 0 0; color: #aab8c7; font-size: 11px; }
+      button {
+        width: 100%;
+        margin-top: 8px;
+        padding: 13px 18px;
+        border: 0;
+        border-radius: 10px;
+        background: #50c878;
+        color: #102017;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      button:hover { background: #70dc92; }
+      .hidden { display: none !important; }
+      .disclaimer { margin-bottom: 0; font-size: 12px; }
+
+      @media (max-width: 600px) {
+        .hud { padding: 12px; }
+        .stats { gap: 6px; }
+        .stat { min-width: 66px; padding: 7px; }
+        .stat strong { font-size: 16px; }
+        .lesson { top: 82px; padding: 12px; }
+        .bottom { padding: 12px; align-items: flex-end; }
+        .controls, .pad-controls, .device { max-width: 52%; padding: 8px; font-size: 11px; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="renderCanvas" aria-label="Scena treningowa 3D"></canvas>
+
+    <header class="hud">
+      <div>
+        <div class="brand">TKD TRAINING · PROTOTYP</div>
+        <div class="subtitle">Trening kombinacji · czytaj ruch partnera i dystans</div>
+        <button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="false">Dźwięk: wyłączony</button>
+      </div>
+      <div class="stats" aria-label="Wynik rundy">
+        <div class="stat"><strong id="score">0/5</strong><span>serie</span></div>
+        <div class="stat"><strong id="streak">0</strong><span>seria</span></div>
+        <div class="stat"><strong id="distance">6.4 m</strong><span>dystans</span></div>
+        <div class="stat"><strong id="guard-state">—</strong><span>garda</span></div>
+        <div class="stat"><strong id="stance-state">ZAMKNIĘTA</strong><span>postawa</span></div>
+      </div>
+    </header>
+
+    <section class="lesson" aria-live="polite">
+      <h1 id="lesson-title">Obserwuj partnera</h1>
+      <p id="lesson-description">Partner się porusza — obserwuj go i sprawdzaj dystans przed każdym kopnięciem.</p>
+      <div id="cue">Zachowaj gotowość</div>
+      <div class="range-meter">
+        <div class="range-track" role="meter" aria-label="Umowny dystans w grze" aria-valuemin="0" aria-valuemax="7" aria-valuenow="6.4">
+          <div id="range-marker" class="range-marker"></div>
+        </div>
+        <div class="range-labels"><span>bliżej</span><span>zakres ćwiczenia</span><span>dalej</span></div>
+        <div id="range-state">Poza zakresem — dostosuj dystans</div>
+        <div id="range-reference"></div>
+      </div>
+    </section>
+
+    <footer class="bottom">
+      <div class="controls small">
+        <div class="pad-controls">DualSense: LS ruch · RS obrót · ✕ noga wykroczna · □ noga zakroczna ·         ○ garda · L1/L2 przesuw · R1/R2/R3 zmiana postawy · L3 widok</div>
+                <div>Klawiatura: WASD ruch · J noga wykroczna · L noga zakroczna · K garda · Spacja przesuw · E zmiana postawy · V widok</div>
+      </div>
+      <div id="view-mode" class="view-mode small">Widok zawodnika</div>
+      <div id="device" class="device small">Pad: oczekiwanie</div>
+    </footer>
+
+    <div id="start-screen" class="start-screen">
+      <div class="start-card">
+        <h1>Wybierz kombinację</h1>
+        <p>Widok zza zawodnika. Obserwuj partnera, dobieraj nogę do kombinacji i używaj gardy, gdy zobaczysz jego atak.</p>
+        <div id="combo-picker" class="combo-picker" role="group" aria-label="Wybór kombinacji"></div>
+        <p id="combo-description" class="combo-description"></p>
+        <div class="height-setting">
+          <label class="height-heading" for="player-height">
+            <span>Twój wzrost</span>
+            <output id="player-height-value" for="player-height">170 cm</output>
+          </label>
+          <input id="player-height" type="range" min="120" max="210" step="1" value="170">
+          <p id="height-status" class="height-note">Wzrost nie jest wysyłany. Ustawienie zmienia tylko szacowany zasięg w grze.</p>
+        </div>
+        <button class="sound-toggle" type="button" aria-pressed="false">Dźwięk: wyłączony</button>
+        <p class="small">DualSense w menu: krzyżak ←/→ wybiera kombinację, Options rozpoczyna rundę.</p>
+        <ul>
+          <li>Lewy drążek — poruszanie zawodnikiem</li>
+          <li>✕ — szybkie kopnięcie nogą wykroczną · □ — mocniejsze kopnięcie nogą zakroczną</li>
+          <li>L1 (lub L2) — przesuw (slide) w kierunku drążka; kopnięcie zaraz po przesuwie ma większy zasięg</li>
+          <li>R1 (lub R2/R3) — zmiana postawy: po kopnięciu nogą zakroczną noga ląduje z przodu, a tułów obraca się na drugą stronę — jesteś odsłonięty, dopóki nie wrócisz R1</li>
+          <li>○ — trzymaj gardę podczas ataku partnera</li>
+          <li>Prawy drążek — obrót · kliknięcie L3 — widok zawodnika z tyłu</li>
+        </ul>
+        <p>Kamera śledzi zawodnika zza ramienia jak w grze walki. Kliknij L3, aby przełączyć widok pierwszoosobowy.</p>
+        <button id="start-button" type="button">Rozpocznij trening</button>
+        <p class="disclaimer">Tryb ćwiczy kolejność, rytm i reakcję; dźwięki są generowane w grze, a animacje nie oceniają techniki. Trenuj z trenerem, w bezpiecznych warunkach.</p>
+      </div>
+    </div>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        const canvas = document.querySelector("#renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: true });
+        const scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0.79, 0.80, 0.81, 1);
+        scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+        scene.fogDensity = 0.01;
+        scene.fogColor = new BABYLON.Color3(0.79, 0.80, 0.81);
+
+        const camera = new BABYLON.UniversalCamera("player-camera", new BABYLON.Vector3(0, 1.65, -3.1), scene);
+        camera.minZ = 0.1;
+        camera.fov = 0.95;
+        camera.rotation.x = 0.015;
+
+        const light = new BABYLON.HemisphericLight("ambient", new BABYLON.Vector3(0, 1, 0), scene);
+        light.intensity = 1.0;
+        const keyLight = new BABYLON.DirectionalLight("key", new BABYLON.Vector3(-0.4, -1, 0.5), scene);
+        keyLight.position = new BABYLON.Vector3(3, 7, -4);
+        keyLight.intensity = 0.9;
+
+        const mat = (name, color, emissive = null) => {
+          const material = new BABYLON.StandardMaterial(name, scene);
+          material.diffuseColor = BABYLON.Color3.FromHexString(color);
+            material.specularColor = new BABYLON.Color3(0.16, 0.18, 0.2);
+            if (emissive) material.emissiveColor = BABYLON.Color3.FromHexString(emissive);
+            return material;
+          };
+          const floorMaterial = mat("floor", "#b8bdc2");
+          const matMaterialA = mat("mat-a", "#c5c9cd");
+          const matMaterialB = mat("mat-b", "#bfc4c8");
+          const lineMaterial = mat("line", "#edf0f2");
+          const fighterMaterial = mat("fighter", "#922f3b");
+          const dobokMaterial = mat("dobok", "#b83c49");
+          const playerDobokMaterial = mat("player-dobok", "#286f9f");
+          const beltMaterial = mat("belt", "#20262b");
+          const skinMaterial = mat("skin", "#d9a77f");
+          const gloveMaterial = mat("gloves", "#cf554d");
+          const helmetMaterial = mat("headguard", "#aa303c");
+          const footGuardMaterial = mat("foot-guards", "#c43d48");
+          const shadowMaterial = mat("contact-shadow", "#0b1118");
+          shadowMaterial.alpha = 0.28;
+          shadowMaterial.specularColor = BABYLON.Color3.Black();
+          const cueMaterial = mat("cue-light", "#2dd276", "#157a46");
+        const eyeMaterial = mat("eyes", "#14202a");
+
+        const floor = BABYLON.MeshBuilder.CreateGround("dojang-floor", { width: 16, height: 24 }, scene);
+        floor.material = floorMaterial;
+        for (let row = 0; row < 5; row += 1) {
+          for (let column = 0; column < 4; column += 1) {
+            const panel = BABYLON.MeshBuilder.CreateGround(`mat-${row}-${column}`, { width: 1.94, height: 1.94 }, scene);
+            panel.position.set(-3 + column * 2, 0.008, -2 + row * 2);
+            panel.material = (row + column) % 2 === 0 ? matMaterialA : matMaterialB;
+          }
+        }
+        for (const x of [-4, 4]) {
+          const boundary = BABYLON.MeshBuilder.CreateBox(`boundary-${x}`, { width: 0.055, height: 0.012, depth: 12 }, scene);
+          boundary.position.set(x, 0.012, 2);
+          boundary.material = lineMaterial;
+        }
+        for (const z of [-3, 7]) {
+          const boundary = BABYLON.MeshBuilder.CreateBox(`boundary-z-${z}`, { width: 8, height: 0.012, depth: 0.055 }, scene);
+          boundary.position.set(0, 0.012, z);
+          boundary.material = lineMaterial;
+        }
+        const centerMark = BABYLON.MeshBuilder.CreateTorus("center-mark", { diameter: 2, thickness: 0.025, tessellation: 64 }, scene);
+        centerMark.position.set(0, 0.02, 2.3);
+        centerMark.rotation.x = Math.PI / 2;
+        centerMark.material = lineMaterial;
+
+        const opponent = new BABYLON.TransformNode("training-partner", scene);
+        opponent.position.set(0, 0, 3.25);
+        opponent.rotation.y = Math.PI;
+        const playerPosition = new BABYLON.Vector3(0, 0, -3.1);
+        let playerYaw = 0;
+        let firstPerson = false;
+        const playerLegMaterial = playerDobokMaterial;
+
+        function box(name, parent, size, position, material, scaling = null) {
+          const mesh = BABYLON.MeshBuilder.CreateBox(name, { width: size[0], height: size[1], depth: size[2] }, scene);
+          mesh.parent = parent;
+          mesh.position.set(position[0], position[1], position[2]);
+          mesh.material = material;
+          if (scaling) mesh.scaling.set(scaling[0], scaling[1], scaling[2]);
+          return mesh;
+        }
+        function sphere(name, parent, diameter, position, material) {
+          const mesh = BABYLON.MeshBuilder.CreateSphere(name, { diameter, segments: 16 }, scene);
+          mesh.parent = parent;
+          mesh.position.set(position[0], position[1], position[2]);
+          mesh.material = material;
+          return mesh;
+        }
+        function cylinder(name, parent, height, diameter, position, rotation, material) {
+          const mesh = BABYLON.MeshBuilder.CreateCylinder(name, { height, diameter, tessellation: 12 }, scene);
+          mesh.parent = parent;
+          mesh.position.set(position[0], position[1], position[2]);
+          mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+          mesh.material = material;
+          return mesh;
+        }
+
+        const opponentUpperBody = new BABYLON.TransformNode("upper-body", scene);
+        opponentUpperBody.parent = opponent;
+        opponentUpperBody.position.y = 1.3;
+        opponentUpperBody.rotation.y = 0.26;
+        const torso = sphere("torso", opponentUpperBody, 0.9, [0, 0, 0], dobokMaterial);
+        torso.scaling.set(0.72, 1.12, 0.52);
+        const hogu = sphere("hogu", opponentUpperBody, 1, [0, 0, 0.15], fighterMaterial);
+        hogu.scaling.set(0.6, 0.62, 0.22);
+        for (let rib = -1; rib <= 1; rib += 1) {
+          box(`hogu-rib-${rib}`, opponentUpperBody, [0.025, 0.42, 0.02], [rib * 0.16, 0, 0.43], gloveMaterial);
+        }
+        box("belt", opponentUpperBody, [0.82, 0.11, 0.16], [0, -0.42, -0.01], beltMaterial);
+        box("belt-knot", opponentUpperBody, [0.16, 0.14, 0.08], [0, -0.42, 0.12], beltMaterial);
+        const beltTail = box("belt-tail", opponentUpperBody, [0.11, 0.38, 0.055], [0.14, -0.66, 0.12], beltMaterial);
+        beltTail.rotation.z = -0.12;
+        cylinder("neck", opponentUpperBody, 0.16, 0.2, [0, 0.49, 0], [0, 0, 0], skinMaterial);
+        sphere("head", opponentUpperBody, 0.38, [0, 0.68, 0], skinMaterial);
+        const hair = sphere("headguard-shell", opponentUpperBody, 0.44, [0, 0.78, 0.015], helmetMaterial);
+        hair.scaling.set(1.02, 0.57, 1.02);
+        sphere("headguard-left-pad", opponentUpperBody, 0.2, [-0.17, 0.66, -0.02], helmetMaterial);
+        sphere("headguard-right-pad", opponentUpperBody, 0.2, [0.17, 0.66, -0.02], helmetMaterial);
+        sphere("face-eye-left", opponentUpperBody, 0.035, [-0.075, 0.7, 0.18], eyeMaterial);
+        sphere("face-eye-right", opponentUpperBody, 0.035, [0.075, 0.7, 0.18], eyeMaterial);
+        sphere("cue-indicator", opponentUpperBody, 0.13, [0, 1.05, 0], cueMaterial);
+        const opponentPlantLeg = new BABYLON.TransformNode("leg-left", scene);
+        opponentPlantLeg.parent = opponent;
+        opponentPlantLeg.position.set(-0.2, 0.8, 0.17);
+        cylinder("leg-left-upper", opponentPlantLeg, 0.4, 0.28, [0, -0.18, 0], [0, 0, 0], dobokMaterial);
+        sphere("leg-left-knee", opponentPlantLeg, 0.23, [0, -0.38, 0], dobokMaterial);
+        cylinder("leg-left-lower", opponentPlantLeg, 0.4, 0.2, [0, -0.56, 0.08], [0.12, 0, 0], dobokMaterial);
+        const opponentKickLeg = new BABYLON.TransformNode("leg-right", scene);
+        opponentKickLeg.parent = opponent;
+        opponentKickLeg.position.set(0.2, 0.8, -0.17);
+        cylinder("leg-right-upper", opponentKickLeg, 0.4, 0.28, [0, -0.18, 0], [0, 0, 0], dobokMaterial);
+        sphere("leg-right-knee", opponentKickLeg, 0.23, [0, -0.38, 0], dobokMaterial);
+        cylinder("leg-right-lower", opponentKickLeg, 0.4, 0.2, [0, -0.56, 0], [0, 0, 0], dobokMaterial);
+        const opponentKickFoot = sphere("foot-right", opponentKickLeg, 0.3, [0, -0.76, -0.12], footGuardMaterial);
+        opponentKickFoot.scaling.set(0.9, 0.42, 1.45);
+        const opponentPlantFoot = sphere("foot-left", opponentPlantLeg, 0.3, [0, -0.76, 0.28], footGuardMaterial);
+        opponentPlantFoot.scaling.set(0.9, 0.42, 1.45);
+        box("dobok-lapel-left", opponentUpperBody, [0.14, 0.5, 0.04], [-0.1, 0.17, 0.37], dobokMaterial).rotation.z = -0.22;
+        box("dobok-lapel-right", opponentUpperBody, [0.14, 0.5, 0.04], [0.1, 0.17, 0.37], dobokMaterial).rotation.z = 0.22;
+        sphere("shoulder-left", opponentUpperBody, 0.34, [-0.4, 0.22, 0], dobokMaterial);
+        sphere("shoulder-right", opponentUpperBody, 0.34, [0.4, 0.22, 0], dobokMaterial);
+        cylinder("arm-left", opponentUpperBody, 0.46, 0.19, [-0.48, 0.2, -0.02], [0, 0, -0.32], dobokMaterial);
+        cylinder("arm-right", opponentUpperBody, 0.46, 0.19, [0.48, 0.2, -0.02], [0, 0, 0.32], dobokMaterial);
+        cylinder("forearm-left", opponentUpperBody, 0.38, 0.16, [-0.53, 0.38, 0.08], [0.25, 0, -0.12], dobokMaterial);
+        cylinder("forearm-right", opponentUpperBody, 0.38, 0.16, [0.53, 0.38, 0.08], [0.25, 0, 0.12], dobokMaterial);
+        sphere("glove-left", opponentUpperBody, 0.25, [-0.57, 0.52, 0.16], gloveMaterial);
+        sphere("glove-right", opponentUpperBody, 0.25, [0.57, 0.52, 0.16], gloveMaterial);
+        const opponentShadow = BABYLON.MeshBuilder.CreateDisc("opponent-shadow", { radius: 0.72, tessellation: 24 }, scene);
+        opponentShadow.rotation.x = -Math.PI / 2;
+        opponentShadow.position.set(0, 0.02, 3.25);
+        opponentShadow.scaling.set(1.15, 0.75, 1);
+        opponentShadow.material = shadowMaterial;
+        const playerShadow = BABYLON.MeshBuilder.CreateDisc("player-shadow", { radius: 0.72, tessellation: 24 }, scene);
+        playerShadow.rotation.x = -Math.PI / 2;
+        playerShadow.position.set(0, 0.02, -3.1);
+        playerShadow.scaling.set(1.15, 0.75, 1);
+        const playerShadowMaterial = mat("player-shadow", "#0b1118");
+        playerShadowMaterial.alpha = 0.28;
+        playerShadowMaterial.specularColor = BABYLON.Color3.Black();
+        playerShadow.material = playerShadowMaterial;
+
+        const playerAvatar = opponent.clone("player-avatar");
+        playerAvatar.position.copyFrom(playerPosition);
+        playerAvatar.rotation.y = playerYaw;
+        playerAvatar.setEnabled(false);
+        const playerAvatarOpacity = 0.86;
+        for (const mesh of playerAvatar.getChildMeshes()) {
+          mesh.visibility = playerAvatarOpacity;
+          if (mesh.name.includes("cue-indicator") || mesh.name.includes("leg-left") || mesh.name.includes("leg-right") || mesh.name.includes("foot-left") || mesh.name.includes("foot-right")) {
+            mesh.setEnabled(false);
+          }
+        }
+        const playerHoguMaterial = mat("player-hogu", "#173e5b");
+        const playerHelmetMaterial = mat("player-headguard", "#246c93");
+        const playerGloveMaterial = mat("player-gloves", "#246c93");
+        const playerFootGuardMaterial = mat("player-foot-guards", "#246c93");
+        for (const mesh of playerAvatar.getChildMeshes()) {
+          if (mesh.name.includes("torso") || mesh.name.includes("dobok-lapel") || mesh.name.includes("shoulder") ||
+              mesh.name.includes("arm-") || mesh.name.includes("forearm") || mesh.name.includes("leg-left-") ||
+              mesh.name.includes("leg-right-")) mesh.material = playerDobokMaterial;
+          else if (mesh.name.includes("hogu")) mesh.material = playerHoguMaterial;
+          else if (mesh.name.includes("headguard")) mesh.material = playerHelmetMaterial;
+          else if (mesh.name.includes("glove")) mesh.material = playerGloveMaterial;
+          else if (mesh.name.includes("foot-")) mesh.material = playerFootGuardMaterial;
+        }
+        const avatarHipY = 0.86;
+        const createAvatarKickLeg = (name, x, z) => {
+          const pivot = new BABYLON.TransformNode(`player-avatar-${name}-kick-pivot`, scene);
+          pivot.parent = playerAvatar;
+          pivot.position.set(x, avatarHipY, z);
+          const thigh = BABYLON.MeshBuilder.CreateCylinder(`player-avatar-${name}-kick-thigh`, { height: 0.46, diameter: 0.3, tessellation: 12 }, scene);
+          thigh.parent = pivot;
+          thigh.position.y = -0.215;
+          thigh.material = playerLegMaterial;
+          thigh.visibility = playerAvatarOpacity;
+          const kneeJoint = new BABYLON.TransformNode(`player-avatar-${name}-knee-joint`, scene);
+          kneeJoint.parent = pivot;
+          kneeJoint.position.y = -0.43;
+          const knee = sphere(`player-avatar-${name}-kick-knee`, kneeJoint, 0.26, [0, 0, 0], playerLegMaterial);
+          knee.visibility = playerAvatarOpacity;
+          const shin = BABYLON.MeshBuilder.CreateCylinder(`player-avatar-${name}-kick-leg`, { height: 0.44, diameter: 0.21, tessellation: 12 }, scene);
+          shin.parent = kneeJoint;
+          shin.position.y = -0.21;
+          shin.material = playerLegMaterial;
+          shin.visibility = playerAvatarOpacity;
+          const foot = BABYLON.MeshBuilder.CreateSphere(`player-avatar-${name}-kick-foot`, { diameter: 0.3, segments: 12 }, scene);
+          foot.parent = kneeJoint;
+          foot.position.set(0, -0.42, 0.14);
+          foot.scaling.set(0.85, 0.4, 1.5);
+          foot.material = playerFootGuardMaterial;
+          foot.visibility = playerAvatarOpacity;
+          pivot.knee = kneeJoint;
+          return pivot;
+        };
+        const avatarLeftLegPivot = createAvatarKickLeg("left", -0.2, 0.17);
+        const avatarRightLegPivot = createAvatarKickLeg("right", 0.2, -0.17);
+        const avatarUpperBody = playerAvatar.getChildren((node) => node.name.includes("upper-body"), true)[0];
+        const avatarGuardLeft = playerAvatar.getChildMeshes().find((mesh) => mesh.name.includes("forearm-left"));
+        const avatarGuardRight = playerAvatar.getChildMeshes().find((mesh) => mesh.name.includes("forearm-right"));
+        const avatarGloveLeft = playerAvatar.getChildMeshes().find((mesh) => mesh.name.includes("glove-left"));
+        const avatarGloveRight = playerAvatar.getChildMeshes().find((mesh) => mesh.name.includes("glove-right"));
+        const opponentStartZ = 3.25;
+        const combos = [
+          {
+            title: "Kombinacja 1",
+            steps: [
+              { name: "Okrężne z nogi wykrocznej", leg: "front", referenceDistance: 1.4, source: "feedback" },
+              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.6, source: "feedback" },
+              { name: "Obrotowe w tył", leg: "back", referenceDistance: 1.8, source: "estimate" }
+            ],
+            description: "Okrężne na tułów, boczne z nogi wykrocznej bez długiego odkładania stopy, potem obrotowe w tył na głowę lub tułów."
+          },
+          {
+            title: "Kombinacja 2",
+            steps: [
+              { name: "Pchające z nogi zakrocznej", leg: "back", referenceDistance: 1.8, source: "feedback" },
+              { name: "Półksiężycowe tą samą nogą (teraz z przodu)", leg: "front", referenceDistance: 1.4, source: "estimate" },
+              { name: "Tornado — obrót 360°", leg: "back", referenceDistance: 2.2, source: "feedback" }
+            ],
+            description: "Pchające z nogi zakrocznej (noga ląduje z przodu), półksiężycowe tą samą nogą — teraz wykroczną, następnie tornado — obrót 360° i kopnięcie okrężne na tułów."
+          },
+          {
+            title: "Kombinacja 3",
+            steps: [
+              { name: "Hakowe z nogi wykrocznej", leg: "front", referenceDistance: 1.3, source: "feedback" },
+              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.5, source: "feedback" },
+              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.7, source: "feedback" }
+            ],
+            description: "Hakowe na głowę, boczne na tułów, okrężne z nogi zakrocznej na głowę — układ wysoki–niższy–wysoki."
+          },
+          {
+            title: "Kombinacja 4",
+            steps: [
+              { name: "Opadające (axe) z nogi wykrocznej", leg: "front", referenceDistance: 1.2, source: "feedback" },
+              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.6, source: "feedback" },
+              { name: "Obrotowe w tył", leg: "back", referenceDistance: 1.8, source: "feedback" }
+            ],
+            description: "Opadające na głowę, okrężne z nogi zakrocznej na tułów, następnie obrotowe w tył na tułów lub głowę."
+          },
+          {
+            title: "Kombinacja 5",
+            steps: [
+              { name: "Proste z nogi wykrocznej", leg: "front", referenceDistance: 1.7, source: "feedback" },
+              { name: "Okrężne z nogi wykrocznej", leg: "front", referenceDistance: 1.5, source: "estimate" },
+              { name: "Obrotowe w tył", leg: "back", referenceDistance: 1.9, source: "feedback" }
+            ],
+            description: "Proste na tułów, okrężne z nogi wykrocznej na głowę, następnie obrotowe w tył na tułów."
+          },
+          {
+            title: "Kombinacja 6 · 1 kopnięcie",
+            steps: [
+              { type: "slide", name: "Przesuw do przodu (L1)" },
+              { name: "Proste z nogi wykrocznej", leg: "front", referenceDistance: 1.7, source: "estimate" }
+            ],
+            description: "Jeden przesuw i jedno kopnięcie: skróć dystans, potem kop nogą wykroczną."
+          },
+          {
+            title: "Kombinacja 7 · 2 kopnięcia",
+            steps: [
+              { name: "Okrężne z nogi wykrocznej", leg: "front", referenceDistance: 1.5, source: "estimate" },
+              { type: "slide", name: "Przesuw do przodu (L1)" },
+              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.5, source: "estimate" }
+            ],
+            description: "Pierwsze kopnięcie możesz chybić — przesuń się bliżej i trafij drugim z nogi zakrocznej. Po nim noga ląduje z przodu: jesteś odsłonięty, wróć R1."
+          },
+          {
+            title: "Kombinacja 8 · dwa przesuwy",
+            steps: [
+              { type: "slide", name: "Przesuw (L1)" },
+              { type: "slide", name: "Przesuw (L1)" },
+              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.6, source: "feedback" }
+            ],
+            description: "Dwa przesuwy, by zmniejszyć dystans krok po kroku, potem jedno kopnięcie boczne."
+          },
+          {
+            title: "Kombinacja 9 · przesuw, kopnięcie, przesuw, kopnięcie",
+            steps: [
+              { type: "slide", name: "Przesuw (L1)" },
+              { name: "Proste z nogi wykrocznej", leg: "front", referenceDistance: 1.7, source: "estimate" },
+              { type: "slide", name: "Przesuw (L1)" },
+              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.5, source: "estimate" }
+            ],
+            description: "Naprzemiennie dochodzisz i kopiesz: każde kopnięcie zmienia Twoją pozycję względem partnera."
+          },
+          {
+            title: "Kombinacja 10 · zmiana postawy",
+            steps: [
+              { name: "Pchające z nogi zakrocznej", leg: "back", referenceDistance: 1.8, source: "feedback" },
+              { type: "switch", name: "Powrót do postawy (R1)" },
+              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.6, source: "feedback" }
+            ],
+            description: "Pchające nogą zakroczną przenosi ją do przodu i odsłania Cię. Wróć w postawę R1, zanim kopniesz dalej."
+          }
+        ];
+
+        const stepPrompt = (step) => step.type === "slide" ? `${step.name} · L1`
+          : step.type === "switch" ? `${step.name} · R1`
+          : `${step.name} · ${step.leg === "front" ? "✕" : "□"}`;
+
+        const startScreen = document.querySelector("#start-screen");
+        const scoreLabel = document.querySelector("#score");
+        const streakLabel = document.querySelector("#streak");
+        const distanceLabel = document.querySelector("#distance");
+        const rangeTrack = document.querySelector(".range-track");
+        const rangeMarker = document.querySelector("#range-marker");
+        const rangeState = document.querySelector("#range-state");
+        const rangeReference = document.querySelector("#range-reference");
+        const guardLabel = document.querySelector("#guard-state");
+        const viewModeLabel = document.querySelector("#view-mode");
+        const titleLabel = document.querySelector("#lesson-title");
+        const descriptionLabel = document.querySelector("#lesson-description");
+        const cueLabel = document.querySelector("#cue");
+        const deviceLabel = document.querySelector("#device");
+        const comboPicker = document.querySelector("#combo-picker");
+        const comboDescription = document.querySelector("#combo-description");
+        const heightInput = document.querySelector("#player-height");
+        const heightValue = document.querySelector("#player-height-value");
+        const heightStatus = document.querySelector("#height-status");
+        const soundToggles = document.querySelectorAll(".sound-toggle");
+        const stanceLabel = document.querySelector("#stance-state");
+        const keys = new Set();
+        let audioContext = null;
+        let masterGain = null;
+        let audioConnected = false;
+        let noiseBuffer = null;
+        let musicTimer = null;
+        let musicStep = 0;
+        let nextMusicStepAt = 0;
+        let soundEnabled = false;
+        let selectedComboIndex = 0;
+        let comboStep = 0;
+        const referenceHeightCm = 170;
+        const distanceTolerance = 0.3;
+        let playerHeightCm = 170;
+        let running = false;
+        let phase = "idle";
+        let phaseEnds = 0;
+        let nextCue = Infinity;
+        let reps = 0;
+        let streak = 0;
+        let feedback = "";
+        let feedbackUntil = 0;
+        let kickUntil = 0;
+        let kickStart = 0;
+        let kickDuration = 0;
+        let activeKickLeg = null;
+        let activeKickPivot = null;
+        let stanceSwapped = false;
+        let torsoBlend = 0;
+        let stanceBlend = 0;
+        let pendingSwapAt = Infinity;
+        let switchStart = 0;
+        let switchUntil = 0;
+        let slideStart = 0;
+        let slideUntil = 0;
+        let slideCooldownUntil = 0;
+        let lastSlideAt = -Infinity;
+        const impulses = [];
+        let previousSlidePressed = false;
+        let previousSwitchPressed = false;
+        let guarding = false;
+        let previousFrontKickPressed = false;
+        let previousBackKickPressed = false;
+        let previousViewTogglePressed = false;
+        let previousMenuLeftPressed = false;
+        let previousMenuRightPressed = false;
+        let previousMenuStartPressed = false;
+        let opponentReactUntil = 0;
+        let opponentReactStart = 0;
+        let nextOpponentAttackAt = Infinity;
+        let opponentAttackImpactAt = Infinity;
+        let opponentAttackStart = 0;
+        let opponentAttackUntil = 0;
+        let opponentAttackFeedback = "";
+        let opponentAttackFeedbackUntil = 0;
+        let activeGamepadIndex = null;
+        let lastFrame = performance.now();
+
+        function setCue(message, mood = "") {
+          cueLabel.textContent = message;
+          cueLabel.className = mood;
+        }
+
+        function createNoiseBuffer() {
+          const buffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
+          const samples = buffer.getChannelData(0);
+          for (let index = 0; index < samples.length; index += 1) {
+            samples[index] = Math.random() * 2 - 1;
+          }
+          return buffer;
+        }
+
+        function playNoiseBurst(time, duration, filterType, frequency, volume) {
+          if (!soundEnabled || !audioContext || !masterGain || !noiseBuffer) return;
+          const source = audioContext.createBufferSource();
+          source.buffer = noiseBuffer;
+          const filter = audioContext.createBiquadFilter();
+          filter.type = filterType;
+          filter.frequency.setValueAtTime(frequency, time);
+          const envelope = audioContext.createGain();
+          envelope.gain.setValueAtTime(0.0001, time);
+          envelope.gain.linearRampToValueAtTime(volume, time + 0.008);
+          envelope.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+          source.connect(filter);
+          filter.connect(envelope);
+          envelope.connect(masterGain);
+          source.onended = () => {
+            source.disconnect();
+            filter.disconnect();
+            envelope.disconnect();
+          };
+          source.start(time);
+          source.stop(time + duration);
+        }
+
+        function playTone(frequency, time, duration, volume, type = "sine") {
+          if (!soundEnabled || !audioContext || !masterGain) return;
+          const oscillator = audioContext.createOscillator();
+          const envelope = audioContext.createGain();
+          oscillator.type = type;
+          oscillator.frequency.setValueAtTime(frequency, time);
+          envelope.gain.setValueAtTime(0.0001, time);
+          envelope.gain.linearRampToValueAtTime(volume, time + 0.015);
+          envelope.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+          oscillator.connect(envelope);
+          envelope.connect(masterGain);
+          oscillator.onended = () => {
+            oscillator.disconnect();
+            envelope.disconnect();
+          };
+          oscillator.start(time);
+          oscillator.stop(time + duration);
+        }
+
+        function playMusicKick(time) {
+          if (!soundEnabled || !audioContext || !masterGain) return;
+          const oscillator = audioContext.createOscillator();
+          const envelope = audioContext.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(125, time);
+          oscillator.frequency.exponentialRampToValueAtTime(48, time + 0.14);
+          envelope.gain.setValueAtTime(0.0001, time);
+          envelope.gain.linearRampToValueAtTime(0.22, time + 0.006);
+          envelope.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+          oscillator.connect(envelope);
+          envelope.connect(masterGain);
+          oscillator.onended = () => {
+            oscillator.disconnect();
+            envelope.disconnect();
+          };
+          oscillator.start(time);
+          oscillator.stop(time + 0.19);
+        }
+
+        function playKiai(leg, time) {
+          if (!soundEnabled || !audioContext || !masterGain) return;
+          const voice = audioContext.createOscillator();
+          const formant = audioContext.createBiquadFilter();
+          const voiceGain = audioContext.createGain();
+          voice.type = "sawtooth";
+          voice.frequency.setValueAtTime(leg === "front" ? 205 : 165, time);
+          voice.frequency.exponentialRampToValueAtTime(leg === "front" ? 135 : 105, time + 0.18);
+          formant.type = "bandpass";
+          formant.frequency.setValueAtTime(leg === "front" ? 920 : 720, time);
+          formant.frequency.exponentialRampToValueAtTime(leg === "front" ? 680 : 540, time + 0.18);
+          formant.Q.setValueAtTime(1.4, time);
+          voiceGain.gain.setValueAtTime(0.0001, time);
+          voiceGain.gain.linearRampToValueAtTime(leg === "front" ? 0.09 : 0.14, time + 0.025);
+          voiceGain.gain.setValueAtTime(leg === "front" ? 0.08 : 0.12, time + 0.075);
+          voiceGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.22);
+          voice.connect(formant);
+          formant.connect(voiceGain);
+          voiceGain.connect(masterGain);
+          voice.onended = () => {
+            voice.disconnect();
+            formant.disconnect();
+            voiceGain.disconnect();
+          };
+          voice.start(time);
+          voice.stop(time + 0.23);
+        }
+
+        function playKickSound(leg) {
+          if (!soundEnabled || !audioContext) return;
+          const time = audioContext.currentTime;
+          playNoiseBurst(time, 0.13, "bandpass", leg === "front" ? 1250 : 850, 0.055);
+          playKiai(leg, time + 0.018);
+          if (leg === "back") playMusicKick(time);
+        }
+
+        function playSlideSound() {
+          if (!soundEnabled || !audioContext) return;
+          playNoiseBurst(audioContext.currentTime, 0.16, "highpass", 2200, 0.035);
+        }
+
+        function playGuardImpactSound(blocked) {
+          if (!soundEnabled || !audioContext) return;
+          const time = audioContext.currentTime;
+          playNoiseBurst(time, 0.12, "lowpass", blocked ? 500 : 260, blocked ? 0.08 : 0.12);
+          playTone(blocked ? 175 : 95, time, 0.14, blocked ? 0.045 : 0.08);
+        }
+
+        function scheduleMusicStep(time, step) {
+          const beat = step % 8;
+          const chordIndex = Math.floor(step / 8) % 4;
+          const chords = [
+            [57, 60, 64],
+            [53, 57, 60],
+            [60, 64, 67],
+            [55, 59, 62]
+          ];
+          const chord = chords[chordIndex];
+          if (beat === 0) {
+            chord.forEach((note) => playTone(440 * (2 ** ((note - 69) / 12)), time, 2.1, 0.018, "triangle"));
+          }
+          if (beat === 0 || beat === 4) {
+            playMusicKick(time);
+            playTone(440 * (2 ** ((chord[0] - 24 - 69) / 12)), time, 0.24, 0.07, "triangle");
+          } else if (beat === 2 || beat === 6) {
+            playNoiseBurst(time, 0.16, "bandpass", 1700, 0.09);
+          }
+          playNoiseBurst(time, 0.045, "highpass", 7600, 0.025);
+        }
+
+        function startMusicScheduler() {
+          const stepDuration = 60 / 104 / 2;
+          musicStep = 0;
+          nextMusicStepAt = audioContext.currentTime + 0.06;
+          musicTimer = window.setInterval(() => {
+            while (soundEnabled && nextMusicStepAt < audioContext.currentTime + 0.12) {
+              scheduleMusicStep(nextMusicStepAt, musicStep);
+              musicStep = (musicStep + 1) % 32;
+              nextMusicStepAt += stepDuration;
+            }
+          }, 25);
+        }
+
+        async function toggleSound() {
+          if (soundEnabled) {
+            soundEnabled = false;
+            window.clearInterval(musicTimer);
+            musicTimer = null;
+            soundToggles.forEach((toggle) => {
+              toggle.textContent = "Dźwięk: wyłączony";
+              toggle.setAttribute("aria-pressed", "false");
+            });
+            if (masterGain && audioContext.state === "running") {
+              masterGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.035);
+              window.setTimeout(() => {
+                if (!soundEnabled && audioContext && audioContext.state === "running") audioContext.suspend();
+              }, 180);
+            }
+            return;
+          }
+          try {
+            audioContext = audioContext || new AudioContext();
+            if (audioContext.state === "closed") throw new Error("Audio context is closed.");
+            await audioContext.resume();
+            masterGain = masterGain || audioContext.createGain();
+            masterGain.gain.setTargetAtTime(0.17, audioContext.currentTime, 0.04);
+            if (!audioConnected) {
+              masterGain.connect(audioContext.destination);
+              audioConnected = true;
+            }
+            noiseBuffer = noiseBuffer || createNoiseBuffer();
+            soundEnabled = true;
+            soundToggles.forEach((toggle) => {
+              toggle.textContent = "Dźwięk: włączony · wyłącz";
+              toggle.setAttribute("aria-pressed", "true");
+            });
+            startMusicScheduler();
+          } catch (error) {
+            console.error("Could not start training audio.", error);
+            soundEnabled = false;
+            soundToggles.forEach((toggle) => {
+              toggle.textContent = "Nie udało się włączyć dźwięku";
+              toggle.setAttribute("aria-pressed", "false");
+            });
+          }
+        }
+
+        soundToggles.forEach((toggle) => toggle.addEventListener("click", toggleSound));
+
+        function selectCombo(index) {
+          selectedComboIndex = (index + combos.length) % combos.length;
+          const combo = combos[selectedComboIndex];
+          comboPicker.querySelectorAll("button").forEach((button, buttonIndex) => {
+            button.setAttribute("aria-pressed", String(buttonIndex === selectedComboIndex));
+          });
+          comboDescription.innerHTML = `<strong>${combo.title}:</strong> ${combo.description}<br><br><span class="muted">${combo.steps.map((step) => step.name).join(" → ")}</span>`;
+          updateRangeDescription();
+        }
+
+        combos.forEach((combo, index) => {
+          const button = document.createElement("button");
+          button.className = "combo-option";
+          button.type = "button";
+          button.textContent = String(index + 1);
+          button.setAttribute("aria-label", combo.title);
+          button.setAttribute("aria-pressed", "false");
+          button.addEventListener("click", () => selectCombo(index));
+          comboPicker.append(button);
+        });
+        selectCombo(0);
+
+        function getPersonalizedRange(step) {
+          const heightScale = BABYLON.Scalar.Clamp(playerHeightCm / referenceHeightCm, 0.9, 1.1);
+          const center = step.referenceDistance * heightScale;
+          return {
+            min: Math.max(0.65, center - distanceTolerance),
+            max: center + distanceTolerance
+          };
+        }
+
+        function getCurrentStep() {
+          const steps = combos[selectedComboIndex].steps;
+          return steps[Math.min(comboStep, steps.length - 1)];
+        }
+
+        function getRangeStep() {
+          const steps = combos[selectedComboIndex].steps;
+          for (let index = Math.min(comboStep, steps.length - 1); index < steps.length; index += 1) {
+            if (!steps[index].type) return steps[index];
+          }
+          return steps.filter((step) => !step.type).pop();
+        }
+
+        function updateRangeDescription() {
+          const step = getRangeStep();
+          const range = getPersonalizedRange(step);
+          rangeTrack.style.setProperty("--range-min", `${BABYLON.Scalar.Clamp(range.min / 7, 0, 1) * 100}%`);
+          rangeTrack.style.setProperty("--range-max", `${BABYLON.Scalar.Clamp(range.max / 7, 0, 1) * 100}%`);
+          const source = step.source === "feedback" ? "z feedbacku" : "szacunek — do sprawdzenia";
+          rangeReference.textContent = `${step.name}: punkt odniesienia ${step.referenceDistance.toFixed(1)} m (${source}); Twój zakres ${range.min.toFixed(1)}–${range.max.toFixed(1)} m · umowne jednostki gry`;
+        }
+
+        function applyPlayerHeight(save = false) {
+          const parsedHeight = Number(heightInput.value);
+          if (!Number.isFinite(parsedHeight)) {
+            heightStatus.textContent = "Nie udało się odczytać wzrostu. Ustaw wartość ponownie.";
+            return;
+          }
+          playerHeightCm = BABYLON.Scalar.Clamp(parsedHeight, 120, 210);
+          const heightScale = playerHeightCm / referenceHeightCm;
+          heightValue.value = `${playerHeightCm} cm`;
+          playerAvatar.scaling.set(1, heightScale, 1);
+          updateRangeDescription();
+          if (save) {
+            try {
+              localStorage.setItem("tkd-training-player-height-cm", String(playerHeightCm));
+              heightStatus.textContent = "Wzrost jest zapisany tylko lokalnie i skaluje szacowany zasięg w grze.";
+            } catch (error) {
+              console.error("Could not save player height locally.", error);
+              heightStatus.textContent = "Nie udało się zapisać ustawienia; wzrost zadziała tylko do zamknięcia tej karty.";
+            }
+          }
+        }
+
+        try {
+          const savedHeight = Number(localStorage.getItem("tkd-training-player-height-cm"));
+          if (Number.isFinite(savedHeight) && savedHeight >= 120 && savedHeight <= 210) {
+            heightInput.value = String(savedHeight);
+          }
+        } catch (error) {
+          console.error("Could not load saved player height.", error);
+          heightStatus.textContent = "Nie udało się odczytać lokalnego ustawienia wzrostu. Możesz ustawić je ponownie.";
+        }
+        heightInput.addEventListener("input", () => applyPlayerHeight(true));
+        applyPlayerHeight();
+
+        function setPhase(next, now) {
+          phase = next;
+          if (next === "waiting") {
+            nextCue = now + 2500 + Math.random() * 1800;
+            nextOpponentAttackAt = now + 900 + Math.random() * 700;
+            titleLabel.textContent = `Obserwuj partnera · ${combos[selectedComboIndex].title}`;
+            descriptionLabel.textContent = "Obserwuj partnera. Gdy zacznie kopnąć, trzymaj ○, aby zasłonić się gardą.";
+            setCue("Zachowaj gotowość");
+          } else if (next === "opening") {
+            phaseEnds = now + 15000;
+            comboStep = 0;
+            nextOpponentAttackAt = Infinity;
+            updateRangeDescription();
+            titleLabel.textContent = `Twoja sekwencja · ${combos[selectedComboIndex].title}`;
+            descriptionLabel.textContent = "✕ szybka noga wykroczna, □ wolniejsza zakroczna (po niej zmienia się postawa), L1 przesuw, R1 powrót w postawę.";
+            setCue(`WEJDŹ · ${stepPrompt(combos[selectedComboIndex].steps[comboStep])}`, "warning");
+          } else if (next === "retreat") {
+            phaseEnds = now + 3500;
+            titleLabel.textContent = "Wróć do gotowości";
+            descriptionLabel.textContent = "Po całej kombinacji odejdź lub zejdź z linii i wróć do gotowości.";
+            setCue("WYJŚCIE Z DYSTANSU", "warning");
+          } else if (next === "finished") {
+            running = false;
+            titleLabel.textContent = `${combos[selectedComboIndex].title} ukończona`;
+            descriptionLabel.textContent = "Dobra praca. Możesz powtórzyć tę sekwencję albo wybrać inną.";
+            setCue(`${reps} z 5 serii ukończonych`);
+            startScreen.querySelector("h1").textContent = "Świetna robota!";
+            startScreen.querySelector(":scope > .start-card > p").textContent = `Ukończyłeś pięć serii: ${combos[selectedComboIndex].title}. Wybierz dowolną sekwencję i spróbuj ponownie.`;
+            document.querySelector("#start-button").textContent = "Zagraj ponownie";
+            startScreen.classList.remove("hidden");
+          }
+        }
+
+        function updateHud() {
+          scoreLabel.textContent = `${reps}/5`;
+          streakLabel.textContent = String(streak);
+        }
+
+        function beginRound() {
+          startScreen.classList.add("hidden");
+          reps = 0;
+          streak = 0;
+          comboStep = 0;
+          feedback = "";
+          updateHud();
+          playerPosition.set(0, 0, -3.1);
+          playerYaw = 0;
+          stanceSwapped = false;
+          stanceBlend = 0;
+          torsoBlend = 0;
+          pendingSwapAt = Infinity;
+          impulses.length = 0;
+          camera.position.set(0, 1.65, -3.1);
+          camera.rotation.set(0.015, 0, 0);
+          opponent.position.set(0, 0, 3.25);
+          opponentAttackUntil = 0;
+          opponentAttackImpactAt = Infinity;
+          opponentAttackFeedback = "";
+          opponentAttackFeedbackUntil = 0;
+          nextOpponentAttackAt = Infinity;
+          setPhase("waiting", performance.now());
+          running = true;
+        }
+
+        function getGamepad() {
+          const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+          if (activeGamepadIndex !== null && pads[activeGamepadIndex]) return pads[activeGamepadIndex];
+          return Array.from(pads).find(Boolean) || null;
+        }
+
+        function deadzone(value, threshold = 0.16) {
+          return Math.abs(value) < threshold ? 0 : (value - Math.sign(value) * threshold) / (1 - threshold);
+        }
+
+        function addImpulse(direction, distance, durationMs, now) {
+          impulses.push({ velocity: direction.scale(distance / (durationMs / 1000)), until: now + durationMs });
+        }
+
+        function startKickAnimation(leg, now) {
+          activeKickLeg = leg;
+          const leadIsLeft = !stanceSwapped;
+          activeKickPivot = (leg === "front") === leadIsLeft ? avatarLeftLegPivot : avatarRightLegPivot;
+          kickStart = now;
+          kickDuration = leg === "front" ? 340 : 570;
+          kickUntil = now + kickDuration;
+          pendingSwapAt = leg === "back" ? now + 50 : Infinity;
+        }
+
+        function toggleStance(now, durationMs) {
+          stanceSwapped = !stanceSwapped;
+          switchStart = now;
+          switchUntil = now + durationMs;
+          pendingSwapAt = Infinity;
+        }
+
+        function advanceCombo(now, resultText) {
+          comboStep += 1;
+          if (comboStep >= combos[selectedComboIndex].steps.length) {
+            feedback = "Kombinacja wykonana — wróć do gotowości.";
+            feedbackUntil = now + 1100;
+            setPhase("retreat", now);
+            setCue(feedback, "");
+          } else {
+            phaseEnds = now + 5000;
+            const nextStep = combos[selectedComboIndex].steps[comboStep];
+            feedback = `${resultText} Ruch ${comboStep} zaliczony — następny: ${stepPrompt(nextStep)}`;
+            feedbackUntil = now + 900;
+            updateRangeDescription();
+            setCue(feedback, "");
+          }
+        }
+
+        function performSlide(now, direction) {
+          if (!running || now < slideCooldownUntil || now < switchUntil) return;
+          slideStart = now;
+          slideUntil = now + 240;
+          slideCooldownUntil = now + 420;
+          lastSlideAt = now;
+          addImpulse(direction, 0.95, 240, now);
+          playSlideSound();
+          if (phase === "opening" && getCurrentStep().type === "slide") advanceCombo(now, "Przesuw!");
+        }
+
+        function performStanceSwitch(now) {
+          if (!running || now < switchUntil || now < kickUntil || pendingSwapAt !== Infinity) return;
+          toggleStance(now, 380);
+          playSlideSound();
+          if (phase === "opening" && getCurrentStep().type === "switch") {
+            if (stanceSwapped) {
+              feedback = "Zmieniłeś postawę — teraz wróć R1, zanim ruszysz dalej.";
+              feedbackUntil = now + 1200;
+              setCue(feedback, "warning");
+            } else {
+              advanceCombo(now, "Postawa odzyskana!");
+            }
+          }
+        }
+
+        function performKick(now, leg) {
+          if (!running || (phase !== "opening" && phase !== "waiting")) return;
+          if (now < switchUntil || now < kickUntil) return;
+          if (phase === "waiting") {
+            feedback = "Poczekaj na sygnał partnera.";
+            feedbackUntil = now + 1200;
+            setCue(feedback, "warning");
+            return;
+          }
+          startKickAnimation(leg, now);
+          addImpulse(new BABYLON.Vector3(Math.sin(playerYaw), 0, Math.cos(playerYaw)), leg === "front" ? 0.14 : 0.32, kickDuration, now);
+          const step = getCurrentStep();
+          if (step.type) {
+            feedback = step.type === "slide" ? "Najpierw przesuw (L1) w stronę partnera." : "Najpierw wróć w postawę (R1).";
+            feedbackUntil = now + 1200;
+            setCue(feedback, "warning");
+            return;
+          }
+          if (step.leg !== leg) {
+            feedback = `Użyj nogi ${step.leg === "front" ? "wykrocznej ✕" : "zakrocznej □"} do tego ruchu.`;
+            feedbackUntil = now + 1200;
+            setCue(feedback, "warning");
+            return;
+          }
+          playKickSound(leg);
+          const distance = BABYLON.Vector3.Distance(
+            playerPosition,
+            new BABYLON.Vector3(opponent.position.x, 0, opponent.position.z)
+          );
+          const range = getPersonalizedRange(step);
+          const slideReach = now - lastSlideAt < 700 ? 0.45 : 0;
+          if (distance > range.max + slideReach) {
+            feedback = `Za daleko (${distance.toFixed(1)} m) — przesuń się (L1) albo kop drugim kopnięciem z bliższej pozycji: ${step.name}.`;
+            feedbackUntil = now + 1500;
+            setCue(feedback, "warning");
+            return;
+          }
+          if (distance < range.min) {
+            feedback = `Za blisko (${distance.toFixed(1)} m) — odsuń się i spróbuj ponownie: ${step.name}.`;
+            feedbackUntil = now + 1500;
+            setCue(feedback, "warning");
+            return;
+          }
+          opponentReactStart = now;
+          opponentReactUntil = now + 420;
+          advanceCombo(now, slideReach && distance > range.max ? "Kopnięcie ze wślizgu!" : "");
+        }
+
+        function update(now) {
+          const dt = Math.min((now - lastFrame) / 1000, 0.04);
+          lastFrame = now;
+          const pad = getGamepad();
+          let forward = 0;
+          let strafe = 0;
+          let turn = 0;
+          let frontKickPressed = false;
+          let backKickPressed = false;
+          let guardPressed = false;
+          let slidePressed = false;
+          let switchPressed = false;
+          let viewTogglePressed = false;
+          let menuLeftPressed = false;
+          let menuRightPressed = false;
+          let menuStartPressed = false;
+
+          if (pad) {
+            deviceLabel.textContent = "Pad: DualSense wykryty";
+            deviceLabel.classList.add("connected");
+            strafe += deadzone(pad.axes[0] || 0);
+            forward -= deadzone(pad.axes[1] || 0);
+            turn += deadzone(pad.axes[2] || 0);
+            frontKickPressed = Boolean(pad.buttons[0]?.pressed);
+            backKickPressed = Boolean(pad.buttons[2]?.pressed);
+            guardPressed = Boolean(pad.buttons[1]?.pressed);
+            slidePressed = Boolean(pad.buttons[4]?.pressed || pad.buttons[6]?.pressed);
+            switchPressed = Boolean(pad.buttons[5]?.pressed || pad.buttons[7]?.pressed || pad.buttons[11]?.pressed);
+            viewTogglePressed = Boolean(pad.buttons[10]?.pressed);
+            menuLeftPressed = Boolean(pad.buttons[14]?.pressed);
+            menuRightPressed = Boolean(pad.buttons[15]?.pressed);
+            menuStartPressed = Boolean(pad.buttons[9]?.pressed);
+          } else {
+            deviceLabel.textContent = "Pad: oczekiwanie · klawiatura aktywna";
+            deviceLabel.classList.remove("connected");
+          }
+
+          if (keys.has("w") || keys.has("arrowup")) forward += 1;
+          if (keys.has("s") || keys.has("arrowdown")) forward -= 1;
+          if (keys.has("a") || keys.has("arrowleft")) strafe -= 1;
+          if (keys.has("d") || keys.has("arrowright")) strafe += 1;
+          if (keys.has("j") || keys.has("enter")) frontKickPressed = true;
+          if (keys.has("l")) backKickPressed = true;
+          if (keys.has(" ")) slidePressed = true;
+          if (keys.has("e")) switchPressed = true;
+          guarding = keys.has("k") || keys.has("shift") || guardPressed;
+          if (viewTogglePressed && !previousViewTogglePressed) firstPerson = !firstPerson;
+          previousViewTogglePressed = viewTogglePressed;
+          const menuVisible = !startScreen.classList.contains("hidden");
+          if (menuVisible && menuLeftPressed && !previousMenuLeftPressed) selectCombo(selectedComboIndex - 1);
+          if (menuVisible && menuRightPressed && !previousMenuRightPressed) selectCombo(selectedComboIndex + 1);
+          if (menuVisible && menuStartPressed && !previousMenuStartPressed) beginRound();
+          previousMenuLeftPressed = menuLeftPressed;
+          previousMenuRightPressed = menuRightPressed;
+          previousMenuStartPressed = menuStartPressed;
+
+          const movement = new BABYLON.Vector3(strafe, 0, forward);
+          if (movement.lengthSquared() > 1) movement.normalize();
+          const forwardVector = new BABYLON.Vector3(Math.sin(playerYaw), 0, Math.cos(playerYaw));
+          const rightVector = new BABYLON.Vector3(Math.cos(playerYaw), 0, -Math.sin(playerYaw));
+          if (running) {
+            playerPosition.addInPlace(forwardVector.scale(movement.z * 3.5 * dt));
+            playerPosition.addInPlace(rightVector.scale(movement.x * 3.5 * dt));
+            for (let index = impulses.length - 1; index >= 0; index -= 1) {
+              if (now >= impulses[index].until) impulses.splice(index, 1);
+              else playerPosition.addInPlace(impulses[index].velocity.scale(dt));
+            }
+            playerPosition.x = BABYLON.Scalar.Clamp(playerPosition.x, -3.5, 3.5);
+            playerPosition.z = BABYLON.Scalar.Clamp(playerPosition.z, -3.5, 2.15);
+            const toOpponent = new BABYLON.Vector3(opponent.position.x - playerPosition.x, 0, opponent.position.z - playerPosition.z);
+            if (toOpponent.length() < 0.8) playerPosition.subtractInPlace(toOpponent.normalize().scale(0.8 - toOpponent.length()));
+            playerYaw += turn * 1.9 * dt;
+          }
+          if (slidePressed && !previousSlidePressed) {
+            const slideDirection = movement.lengthSquared() > 0.09
+              ? forwardVector.scale(movement.z).add(rightVector.scale(movement.x)).normalize()
+              : forwardVector;
+            performSlide(now, slideDirection);
+          }
+          if (switchPressed && !previousSwitchPressed) performStanceSwitch(now);
+          previousSlidePressed = slidePressed;
+          previousSwitchPressed = switchPressed;
+          if (running && now >= pendingSwapAt) toggleStance(now, 380);
+          const stanceTarget = stanceSwapped ? 1 : 0;
+          stanceBlend = BABYLON.Scalar.Clamp(stanceBlend + Math.sign(stanceTarget - stanceBlend) * dt / 0.38, 0, 1);
+          if (Math.abs(stanceTarget - stanceBlend) < 0.001) stanceBlend = stanceTarget;
+          // Torso is the spring: it turns about 3x faster than the legs.
+          torsoBlend = BABYLON.Scalar.Clamp(torsoBlend + Math.sign(stanceTarget - torsoBlend) * dt / 0.13, 0, 1);
+          if (Math.abs(stanceTarget - torsoBlend) < 0.001) torsoBlend = stanceTarget;
+          stanceLabel.textContent = stanceSwapped ? "ODSŁONIĘTA" : "ZAMKNIĘTA";
+          stanceLabel.style.color = stanceSwapped ? "#ffb35c" : "#81e3a2";
+          playerShadowMaterial.diffuseColor = BABYLON.Color3.FromHexString(stanceSwapped ? "#d9731a" : "#0b1118");
+          playerShadowMaterial.alpha = stanceSwapped ? 0.55 : 0.28;
+          const bounce = Math.abs(Math.sin(now / 220));
+          const opponentLean = Math.sin(now / 430) * 0.035;
+          const playerLean = Math.sin((now + 90) / 410) * 0.025 + movement.z * 0.035;
+          const defenseLean = guarding && now < opponentAttackUntil ? 0.14 : 0;
+          const playerBounce = bounce * 0.045;
+          camera.rotation.x = firstPerson ? 0.015 + playerLean : 0;
+          camera.fov = firstPerson ? 0.95 : 1.05;
+
+          if (running && phase === "waiting" && now >= nextOpponentAttackAt) {
+            opponentAttackStart = now;
+            opponentAttackImpactAt = now + 850;
+            opponentAttackUntil = now + 1250;
+            nextOpponentAttackAt = Infinity;
+            setCue("PARTNER KOPIE — trzymaj ○, aby zasłonić się gardą!", "danger");
+          }
+          if (running && now >= opponentAttackImpactAt) {
+            opponentAttackImpactAt = Infinity;
+            playGuardImpactSound(guarding && !stanceSwapped);
+            if (guarding && !stanceSwapped) {
+              opponentAttackFeedback = "Dobra garda — zablokowałeś kopnięcie partnera.";
+            } else if (stanceSwapped) {
+              opponentAttackFeedback = "Trafienie! Odsłonięta strona po kopnięciu zakrocznym — wróć w postawę (R1).";
+              streak = 0;
+              updateHud();
+            } else {
+              opponentAttackFeedback = "Trafienie! Następnym razem trzymaj ○ podczas ataku.";
+              streak = 0;
+              updateHud();
+            }
+            opponentAttackFeedbackUntil = now + 1400;
+            setCue(opponentAttackFeedback, guarding ? "" : "warning");
+          }
+          if (running && phase === "waiting" && now >= nextCue) setPhase("opening", now);
+          if (running && phase === "opening" && now >= phaseEnds) {
+            streak = 0;
+            updateHud();
+            feedback = "Czas na kombinację minął — obserwuj następny sygnał.";
+            feedbackUntil = now + 1500;
+            setPhase("waiting", now);
+            setCue(feedback, "warning");
+          }
+          if (running && phase === "retreat") {
+            const distance = BABYLON.Vector3.Distance(
+              playerPosition,
+              new BABYLON.Vector3(opponent.position.x, 0, opponent.position.z)
+            );
+            if (distance >= 4.4) {
+              reps += 1;
+              streak += 1;
+              updateHud();
+              if (reps >= 5) setPhase("finished", now);
+              else {
+                feedback = "Sekwencja zaliczona — dobra gotowość!";
+                feedbackUntil = now + 1400;
+                setPhase("waiting", now);
+                setCue(feedback);
+              }
+            } else if (now >= phaseEnds) {
+              streak = 0;
+              updateHud();
+              feedback = "Pamiętaj o wyjściu po kopnięciu.";
+              feedbackUntil = now + 1600;
+              setPhase("waiting", now);
+              setCue(feedback, "warning");
+            }
+          }
+          if (frontKickPressed && !previousFrontKickPressed) performKick(now, "front");
+          else if (backKickPressed && !previousBackKickPressed) performKick(now, "back");
+          previousFrontKickPressed = frontKickPressed;
+          previousBackKickPressed = backKickPressed;
+
+          const distance = BABYLON.Vector3.Distance(
+            playerPosition,
+            new BABYLON.Vector3(opponent.position.x, 0, opponent.position.z)
+          );
+          distanceLabel.textContent = `${distance.toFixed(1)} m`;
+          const currentRange = getPersonalizedRange(getRangeStep());
+          const inPracticeRange = distance >= currentRange.min && distance <= currentRange.max;
+          distanceLabel.style.color = inPracticeRange
+            ? "#81e3a2"
+            : distance > currentRange.max ? "#ffcf70" : "#ff8c82";
+          rangeMarker.style.left = `${BABYLON.Scalar.Clamp(distance / 7, 0, 1) * 100}%`;
+          rangeTrack.setAttribute("aria-valuenow", distance.toFixed(1));
+          rangeTrack.setAttribute("aria-valuetext", `${distance.toFixed(1)} m; zakres ćwiczenia ${currentRange.min.toFixed(1)}–${currentRange.max.toFixed(1)} m`);
+          rangeState.textContent = inPracticeRange
+            ? "W zakresie ćwiczenia"
+            : distance > currentRange.max ? "Za daleko — skróć dystans" : "Za blisko — zwiększ dystans";
+          rangeState.className = inPracticeRange ? "good" : distance < currentRange.min ? "close" : "";
+          guardLabel.textContent = guarding ? "AKTYWNA" : "—";
+          guardLabel.style.color = guarding ? "#81e3a2" : "";
+
+          const opponentTargetX = Math.sin(now / 1150) * 0.62;
+          const opponentTargetZ = opponentStartZ + Math.sin(now / 870) * 0.58;
+          const movementBlend = 1 - Math.exp(-dt * 2.2);
+          opponent.position.x += (opponentTargetX - opponent.position.x) * movementBlend;
+          opponent.position.z += (opponentTargetZ - opponent.position.z) * movementBlend;
+          opponent.rotation.y = Math.atan2(playerPosition.x - opponent.position.x, playerPosition.z - opponent.position.z);
+          if (now < opponentAttackUntil) {
+            cueMaterial.emissiveColor = new BABYLON.Color3(0.75, 0.06, 0.04);
+          } else if (phase === "opening") {
+            cueMaterial.emissiveColor = new BABYLON.Color3(0.08, 0.65, 0.3);
+          } else {
+            cueMaterial.emissiveColor = new BABYLON.Color3(0.04, 0.18, 0.11);
+          }
+          if (now < opponentReactUntil) {
+            const progress = (now - opponentReactStart) / (opponentReactUntil - opponentReactStart);
+            const reaction = Math.sin(progress * Math.PI);
+            const retreatDirection = new BABYLON.Vector3(
+              opponent.position.x - playerPosition.x,
+              0,
+              opponent.position.z - playerPosition.z
+            ).normalize();
+            opponent.position.x += retreatDirection.x * reaction * 0.28;
+            opponent.position.z += retreatDirection.z * reaction * 0.28;
+            opponent.rotation.x = reaction * 0.1;
+          } else {
+            opponent.rotation.x = opponentLean;
+          }
+          opponent.position.y = bounce * 0.055;
+          if (now < opponentAttackUntil) {
+            const progress = BABYLON.Scalar.Clamp((now - opponentAttackStart) / (opponentAttackUntil - opponentAttackStart), 0, 1);
+            const extension = Math.sin(progress * Math.PI);
+            opponentKickLeg.position.y = 0.8 + extension * 0.18;
+            opponentKickLeg.position.z = -0.17 + extension * 0.52;
+            opponentKickLeg.rotation.x = -extension * 0.8;
+          } else {
+            opponentKickLeg.position.set(0.2, 0.8, -0.17);
+            opponentKickLeg.rotation.x = 0;
+          }
+          opponentShadow.position.x = opponent.position.x;
+          opponentShadow.position.z = opponent.position.z;
+          opponentShadow.scaling.set(1.15 + bounce * 0.12, 0.75 + bounce * 0.08, 1);
+          const smoothBlend = stanceBlend * stanceBlend * (3 - 2 * stanceBlend);
+          const switchArc = Math.sin(stanceBlend * Math.PI);
+          const slideArc = now < slideUntil ? Math.sin(BABYLON.Scalar.Clamp((now - slideStart) / (slideUntil - slideStart), 0, 1) * Math.PI) : 0;
+          avatarLeftLegPivot.position.z = 0.17 - 0.34 * smoothBlend + (stanceSwapped ? 0 : switchArc * 0.12) + slideArc * 0.08;
+          avatarRightLegPivot.position.z = -0.17 + 0.34 * smoothBlend + (stanceSwapped ? switchArc * 0.12 : 0) - slideArc * 0.04;
+          avatarLeftLegPivot.position.y = avatarHipY + (stanceSwapped ? 0 : switchArc * 0.1);
+          avatarRightLegPivot.position.y = avatarHipY + (stanceSwapped ? switchArc * 0.1 : 0);
+          if (avatarUpperBody) {
+            const torsoBlendSmooth = torsoBlend * torsoBlend * (3 - 2 * torsoBlend);
+            const torsoArc = Math.sin(torsoBlend * Math.PI);
+            avatarUpperBody.rotation.y = 0.26 - 0.52 * torsoBlendSmooth - (stanceSwapped ? 1 : -1) * 0.3 * torsoArc;
+            avatarUpperBody.rotation.x = slideArc * 0.16;
+          }
+          const motionDip = switchArc * 0.08 - slideArc * 0.05;
+          const movingLeg = stanceSwapped ? avatarRightLegPivot : avatarLeftLegPivot;
+          const kickActive = now < kickUntil && activeKickLeg && activeKickPivot;
+          const kickProgress = kickActive ? BABYLON.Scalar.Clamp((now - kickStart) / kickDuration, 0, 1) : 0;
+          const extension = Math.sin(kickProgress * Math.PI);
+          for (const pivot of [avatarLeftLegPivot, avatarRightLegPivot]) {
+            let hip = -0.04;
+            let knee = 0.3 + slideArc * 0.45;
+            if (pivot === movingLeg) {
+              hip -= switchArc * 0.55;
+              knee += switchArc * 0.9;
+            } else {
+              knee += switchArc * 0.3;
+            }
+            if (kickActive && pivot === activeKickPivot) {
+              const frontKick = activeKickLeg === "front";
+              // Chamber (knee bent) first, then snap the shin out, then retract.
+              const snap = Math.sin(Math.PI * BABYLON.Scalar.Clamp((kickProgress - 0.25) / 0.5, 0, 1));
+              hip = -extension * (frontKick ? 0.95 : 1.3);
+              knee = 0.15 + 1.6 * extension * (1 - snap);
+            }
+            pivot.rotation.x = hip;
+            pivot.knee.rotation.x = knee;
+          }
+          if (kickActive) {
+            playerAvatar.position.y = playerBounce + extension * 0.08 + motionDip;
+            playerAvatar.rotation.x = playerLean + defenseLean - extension * 0.12;
+          } else {
+            activeKickLeg = null;
+            activeKickPivot = null;
+            playerAvatar.position.y = playerBounce + motionDip;
+            playerAvatar.rotation.x = playerLean + defenseLean + slideArc * 0.1;
+          }
+          if (avatarGuardLeft && avatarGuardRight) {
+            avatarGuardLeft.position.set(guarding ? -0.4 : -0.53, guarding ? 0.42 : 0.38, guarding ? 0.24 : 0.08);
+            avatarGuardRight.position.set(guarding ? 0.4 : 0.53, guarding ? 0.42 : 0.38, guarding ? 0.24 : 0.08);
+          }
+          if (avatarGloveLeft && avatarGloveRight) {
+            avatarGloveLeft.position.set(guarding ? -0.4 : -0.57, guarding ? 0.58 : 0.52, guarding ? 0.32 : 0.16);
+            avatarGloveRight.position.set(guarding ? 0.4 : 0.57, guarding ? 0.58 : 0.52, guarding ? 0.32 : 0.16);
+          }
+          if (now < feedbackUntil && feedback && phase === "opening") setCue(feedback, "warning");
+
+          playerAvatar.position.x = playerPosition.x;
+          playerAvatar.position.z = playerPosition.z;
+          playerAvatar.rotation.y = playerYaw;
+          playerShadow.position.x = playerPosition.x;
+          playerShadow.position.z = playerPosition.z;
+          playerShadow.scaling.set(1.15 + bounce * 0.12, 0.75 + bounce * 0.08, 1);
+          playerAvatar.setEnabled(!firstPerson);
+          viewModeLabel.textContent = firstPerson ? "Widok 1. osoby · L3/V: zmień" : "Widok zza zawodnika · L3/V: zmień";
+          if (firstPerson) {
+            camera.position.set(playerPosition.x, 1.65 * (playerHeightCm / referenceHeightCm) + playerBounce, playerPosition.z);
+            camera.rotation.y = playerYaw;
+            camera.setTarget(camera.position.add(forwardVector.scale(1.7)).add(new BABYLON.Vector3(0, 0.05 * (playerHeightCm / referenceHeightCm), 0)));
+          } else {
+            const followPosition = playerPosition
+              .subtract(forwardVector.scale(4.1))
+              .add(rightVector.scale(1.65))
+              .add(new BABYLON.Vector3(0, 1.9 * (playerHeightCm / referenceHeightCm), 0));
+            camera.position.copyFrom(followPosition);
+            const target = playerPosition.add(opponent.position.subtract(playerPosition).scale(0.42));
+            target.y = 1.2 * (playerHeightCm / referenceHeightCm);
+            camera.setTarget(target);
+          }
+          if (now < opponentAttackFeedbackUntil) {
+            setCue(opponentAttackFeedback, opponentAttackFeedback.startsWith("Trafienie") ? "warning" : "");
+          } else if (phase === "opening" && (cueLabel.textContent.startsWith("Dobra garda") || cueLabel.textContent.startsWith("Trafienie!"))) {
+            const step = getCurrentStep();
+            setCue(`WEJDŹ · ${stepPrompt(step)}`, "warning");
+          }
+        }
+
+        window.addEventListener("keydown", (event) => {
+          const key = event.key.toLowerCase();
+          if (key === "v" && !event.repeat) firstPerson = !firstPerson;
+          keys.add(key);
+          if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
+        });
+        window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
+        window.addEventListener("blur", () => keys.clear());
+        window.addEventListener("gamepadconnected", (event) => {
+          activeGamepadIndex = event.gamepad.index;
+          deviceLabel.textContent = "Pad: DualSense wykryty";
+          deviceLabel.classList.add("connected");
+        });
+        window.addEventListener("gamepaddisconnected", (event) => {
+          if (activeGamepadIndex === event.gamepad.index) activeGamepadIndex = null;
+        });
+        document.querySelector("#start-button").addEventListener("click", beginRound);
+        engine.runRenderLoop(() => {
+          update(performance.now());
+          scene.render();
+        });
+        window.addEventListener("resize", () => engine.resize());
+      })();
+    </script>
+  </body>
+</html>

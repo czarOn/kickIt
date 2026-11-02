@@ -1,0 +1,10 @@
+﻿web.txt
+*.mp4
+*.mov
+*.avi
+videos/
+exports/
+
+*.pdf
+OIP-*.jpg
+perspective.jpg

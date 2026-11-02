@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KickIt — trening taekwondo: dystans, kombinacje, nawyki</title>
+  <meta name="description" content="Darmowe narzędzie treningowe taekwondo: ćwicz kombinacje kopnięć, dystans i postawę w grze 3D oraz analizuj własne kopnięcia kamerą.">
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, Segoe UI, sans-serif; }
+    body { margin: 0; background: #0f141b; color: #e8eef5; line-height: 1.5; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 32px 18px 48px; }
+    h1 { font-size: 2.4rem; margin: 0 0 6px; letter-spacing: .02em; }
+    h1 span { color: #e63946; }
+    .lead { color: #b9c7d6; font-size: 1.1rem; margin: 0 0 28px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .card { background: #1a222c; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .card h2 { margin: 0; font-size: 1.2rem; }
+    .card p { margin: 0; color: #b9c7d6; flex: 1; }
+    .btn { display: inline-block; text-align: center; background: #e63946; color: #fff; text-decoration: none; font-weight: 700; border-radius: 8px; padding: 10px 14px; }
+    .btn.alt { background: #246c93; }
+    h3 { margin: 32px 0 8px; font-size: 1rem; color: #ffd37a; }
+    ul { margin: 0; padding-left: 1.2rem; color: #b9c7d6; }
+    .small { font-size: .85rem; color: #8fa1b5; margin-top: 28px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Kick<span>It</span></h1>
+    <p class="lead">Trening taekwondo, który uczy dystansu, kombinacji i właściwych nawyków — zanim wyjdziesz na prawdziwy sparing.</p>
+
+    <div class="cards">
+      <div class="card">
+        <h2>Gra treningowa 3D</h2>
+        <p>Widok zza zawodnika, ruchomy partner, kombinacje 1–3 kopnięć z przesuwami, zmiana postawy i kontrola dystansu. Klawiatura lub pad (DualSense).</p>
+        <a class="btn" href="game.html">Graj</a>
+      </div>
+      <div class="card">
+        <h2>Analiza kopnięć z kamery</h2>
+        <p>Wczytaj film lub użyj kamery: kąty kolan, wysokość stopy, obrót tułowia i wykrywanie kopnięć. Wideo zostaje w Twojej przeglądarce.</p>
+        <a class="btn alt" href="pose.html">Analizuj</a>
+      </div>
+    </div>
+
+    <h3>Jak zacząć</h3>
+    <ul>
+      <li>Otwórz grę, ustaw swój wzrost, wybierz kombinację i naciśnij „Rozpocznij trening”.</li>
+      <li>Nagraj siebie z boku (cały zawodnik w kadrze) i wczytaj film do analizy.</li>
+      <li>Potem wyjdź na matę — to jest tylko przygotowanie do prawdziwego sparingu.</li>
+    </ul>
+
+    <p class="small">KickIt to wczesny prototyp i pomoc treningowa, nie ocena techniki. Odległości i wartości są orientacyjne i będą dopracowywane na podstawie nagrań. Trenuj w bezpiecznych warunkach, z trenerem. Prywatność: gra i analiza działają lokalnie w przeglądarce; nic nie jest wysyłane na serwer.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TKD Training — test kontrolera</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #10151d;
+        color: #eef3f8;
+      }
+
+      body {
+        box-sizing: border-box;
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 32px 20px;
+      }
+
+      h1, h2, p { margin-top: 0; }
+      h1 { margin-bottom: 8px; }
+      .muted, .hint { color: #aab8c7; }
+      .card {
+        margin-top: 20px;
+        padding: 20px;
+        border: 1px solid #344252;
+        border-radius: 12px;
+        background: #19222d;
+      }
+      .status { font-weight: 700; }
+      .connected { color: #7ee0a1; }
+      .disconnected { color: #ffbd72; }
+      .inputs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 10px 20px;
+      }
+      .input-row {
+        display: grid;
+        grid-template-columns: 90px 1fr 44px;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+      .meter {
+        height: 12px;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #2a3745;
+      }
+      .fill {
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: #50c878;
+        transition: width 50ms linear;
+      }
+      .button-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+      }
+      .button {
+        padding: 9px;
+        border: 1px solid #394858;
+        border-radius: 8px;
+        color: #b8c5d2;
+        text-align: center;
+      }
+      .button.active {
+        border-color: #50c878;
+        background: #17402a;
+        color: #b9ffd0;
+      }
+      kbd {
+        padding: 2px 6px;
+        border: 1px solid #536274;
+        border-radius: 4px;
+        background: #25313f;
+      }
+      @media (max-width: 520px) {
+        body { padding: 22px 14px; }
+        .card { padding: 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test kontrolera</h1>
+    <p class="muted">Sprawdź, czy Chrome odczytuje przyciski i gałki DualSense.</p>
+
+    <section class="card" aria-live="polite">
+      <h2>Status</h2>
+      <p id="status" class="status disconnected">Nie wykryto kontrolera.</p>
+      <p id="controller-name" class="muted">Podłącz pad przez USB lub Bluetooth.</p>
+      <p class="hint">Po podłączeniu naciśnij dowolny przycisk na padzie. Chrome może wymagać tej akcji, zanim udostępni kontroler stronie.</p>
+    </section>
+
+    <section class="card">
+      <h2>Osie kontrolera</h2>
+      <div id="axes" class="inputs"></div>
+    </section>
+
+    <section class="card">
+      <h2>Przyciski</h2>
+      <div id="buttons" class="button-grid"></div>
+    </section>
+
+    <section class="card">
+      <h2>Test klawiatury</h2>
+      <p class="muted">Jako wariant zapasowy przytrzymaj <kbd>W</kbd>/<kbd>A</kbd>/<kbd>S</kbd>/<kbd>D</kbd> albo klawisze strzałek. <kbd>Spacja</kbd> sprawdza akcję.</p>
+      <p id="keyboard-state" class="status">Brak wciśniętych klawiszy.</p>
+    </section>
+
+    <script>
+      const status = document.querySelector("#status");
+      const controllerName = document.querySelector("#controller-name");
+      const axesContainer = document.querySelector("#axes");
+      const buttonsContainer = document.querySelector("#buttons");
+      const keyboardState = document.querySelector("#keyboard-state");
+      const pressedKeys = new Set();
+      let activeIndex = null;
+      let lastControllerId = "";
+
+      function getPads() {
+        return navigator.getGamepads ? navigator.getGamepads() : [];
+      }
+
+      function renderController(gamepad) {
+        if (!gamepad) {
+          status.textContent = "Nie wykryto kontrolera.";
+          status.className = "status disconnected";
+          controllerName.textContent = navigator.getGamepads
+            ? "Podłącz pad przez USB lub Bluetooth, a następnie naciśnij dowolny przycisk."
+            : "Ta przeglądarka nie udostępnia Gamepad API.";
+          axesContainer.replaceChildren();
+          buttonsContainer.replaceChildren();
+          lastControllerId = "";
+          return;
+        }
+
+        status.textContent = "Kontroler wykryty";
+        status.className = "status connected";
+        controllerName.textContent = `${gamepad.id} · indeks ${gamepad.index} · mapowanie: ${gamepad.mapping || "niestandardowe"}`;
+
+        if (gamepad.id !== lastControllerId) {
+          lastControllerId = gamepad.id;
+          axesContainer.replaceChildren();
+          gamepad.axes.forEach((_, index) => {
+            const row = document.createElement("div");
+            row.className = "input-row";
+            row.innerHTML = `<span>Gałka ${index + 1}</span><div class="meter"><div class="fill"></div></div><output>0.00</output>`;
+            axesContainer.append(row);
+          });
+          gamepad.buttons.forEach((_, index) => {
+            const item = document.createElement("div");
+            item.className = "button";
+            item.textContent = `Przycisk ${index}`;
+            buttonsContainer.append(item);
+          });
+        }
+
+        gamepad.axes.forEach((value, index) => {
+          const row = axesContainer.children[index];
+          if (!row) return;
+          const fill = row.querySelector(".fill");
+          const output = row.querySelector("output");
+          const normalized = (value + 1) / 2;
+          fill.style.width = `${Math.max(0, Math.min(1, normalized)) * 100}%`;
+          output.value = value.toFixed(2);
+          fill.style.background = Math.abs(value) > 0.15 ? "#50c878" : "#718096";
+        });
+
+        gamepad.buttons.forEach((button, index) => {
+          const item = buttonsContainer.children[index];
+          if (!item) return;
+          item.classList.toggle("active", button.pressed || button.value > 0.1);
+          item.textContent = `Przycisk ${index}${button.value > 0 ? ` · ${button.value.toFixed(2)}` : ""}`;
+        });
+      }
+
+      function update() {
+        const pads = getPads();
+        const gamepad = activeIndex === null
+          ? Array.from(pads).find(Boolean)
+          : pads[activeIndex];
+        renderController(gamepad || null);
+        requestAnimationFrame(update);
+      }
+
+      window.addEventListener("gamepadconnected", (event) => {
+        activeIndex = event.gamepad.index;
+      });
+
+      window.addEventListener("gamepaddisconnected", (event) => {
+        if (activeIndex === event.gamepad.index) activeIndex = null;
+      });
+
+      window.addEventListener("keydown", (event) => {
+        pressedKeys.add(event.key.toLowerCase());
+        updateKeyboardState();
+      });
+
+      window.addEventListener("keyup", (event) => {
+        pressedKeys.delete(event.key.toLowerCase());
+        updateKeyboardState();
+      });
+
+      window.addEventListener("blur", () => {
+        pressedKeys.clear();
+        updateKeyboardState();
+      });
+
+      function updateKeyboardState() {
+        keyboardState.textContent = pressedKeys.size
+          ? `Wciśnięte: ${Array.from(pressedKeys).join(", ")}`
+          : "Brak wciśniętych klawiszy.";
+      }
+
+      update();
+    </script>
+  </body>
+</html>
