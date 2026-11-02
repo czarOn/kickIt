@@ -191,7 +191,7 @@
         } else {
           s.end = tSec; s.duration = s.end - s.start;
           state[name] = null;
-          if (s.duration >= 0.12 && s.maxUp > thr + 0.05) {
+          if (s.duration >= 0.25 && s.maxUp > thr + 0.05 && s.minKnee >= 20 && s.start - frames[0].t >= 1) {
             kicks.push(s);
             addKickRow(s, kicks.length);
             $("exportJson").disabled = $("exportCsv").disabled = false;
