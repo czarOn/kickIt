@@ -266,6 +266,16 @@
       .replay-load { display: block; margin: 14px 0 6px; font-size: 13px; color: #b9c7d6; }
       .replay-load input { display: block; margin-top: 6px; }
       .replay-mode .hud, .replay-mode .lesson, .replay-mode .bottom { display: none !important; }
+      .profile-setting { margin: 12px 0; padding: 8px 10px; border: 1px solid #3b4a5c; border-radius: 10px; font-size: 13px; }
+      .profile-setting summary { cursor: pointer; font-weight: 700; }
+      .profile-row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+      .profile-row select, .profile-row .mini { background: #2a3644; color: inherit; border: 1px solid #3b4a5c; border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+      .profile-row .mini { font-weight: 600; }
+      .profile-row .mini:hover { background: #3b4a5c; }
+      .binding-list { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; }
+      .binding-list button { background: #2a3644; color: inherit; border: 1px solid #3b4a5c; border-radius: 6px; padding: 5px 10px; font: inherit; font-weight: 600; cursor: pointer; }
+      .binding-list button.capturing { background: #e63946; border-color: #e63946; }
+      .binding-list .locked { color: #8fa0b3; text-align: right; }
       #replay-title { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       #replay-bar { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; background: rgba(20, 26, 34, 0.9); color: #e8eef5; padding: 8px 12px; border-radius: 10px; font-size: 13px; z-index: 5; }
       #replay-bar button { background: #2a3644; color: inherit; border: 1px solid #3b4a5c; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
@@ -316,8 +326,8 @@
 
     <footer class="bottom">
       <div class="controls small">
-        <div class="pad-controls">DualSense: LS ruch · RS obrót · ✕ noga wykroczna · □ noga zakroczna ·         ○ garda · L1/L2 przesuw · R1/R2/R3 zmiana postawy · L3 widok</div>
-                <div>Klawiatura: WASD ruch · J noga wykroczna · L noga zakroczna · K garda · Spacja przesuw · E zmiana postawy · V widok</div>
+        <div id="pad-hint" class="pad-controls"></div>
+        <div id="key-hint"></div>
       </div>
       <div id="view-mode" class="view-mode small">Widok zawodnika</div>
       <div id="device" class="device small">Pad: oczekiwanie</div>
@@ -337,14 +347,34 @@
           <input id="player-height" type="range" min="120" max="210" step="1" value="170">
           <p id="height-status" class="height-note">Wzrost nie jest wysyłany. Ustawienie zmienia tylko szacowany zasięg w grze.</p>
         </div>
+        <details class="profile-setting">
+          <summary>Gracz i układ przycisków</summary>
+          <div class="profile-row">
+            <label for="profile-select">Gracz</label>
+            <select id="profile-select"></select>
+            <button type="button" class="mini" id="profile-new">Nowy</button>
+            <button type="button" class="mini" id="profile-delete">Usuń</button>
+          </div>
+          <div class="profile-row">
+            <label for="preset-select">Układ</label>
+            <select id="preset-select"></select>
+          </div>
+          <div id="binding-list" class="binding-list"></div>
+          <p id="binding-status" class="height-note">Kliknij akcję, potem naciśnij przycisk pada (możesz trzymać modyfikator) lub klawisz. Profile są zapisywane tylko w tej przeglądarce.</p>
+          <div class="profile-row">
+            <button type="button" class="mini" id="profiles-export">Eksport JSON</button>
+            <button type="button" class="mini" id="profiles-import-button">Import JSON</button>
+            <input id="profiles-import" type="file" accept=".json,application/json" hidden>
+          </div>
+        </details>
         <button class="sound-toggle" type="button" aria-pressed="false">Dźwięk: wyłączony</button>
         <p class="small">DualSense w menu: krzyżak ←/→ wybiera kombinację, Options rozpoczyna rundę.</p>
         <ul>
           <li>Lewy drążek — poruszanie zawodnikiem</li>
-          <li>✕ — szybkie kopnięcie nogą wykroczną · □ — mocniejsze kopnięcie nogą zakroczną</li>
-          <li>L1 (lub L2) — przesuw (slide) w kierunku drążka; kopnięcie zaraz po przesuwie ma większy zasięg</li>
-          <li>R1 (lub R2/R3) — zmiana postawy: po kopnięciu nogą zakroczną noga ląduje z przodu, a tułów obraca się na drugą stronę — jesteś odsłonięty, dopóki nie wrócisz R1</li>
-          <li>○ — trzymaj gardę podczas ataku partnera</li>
+          <li id="list-kicks"></li>
+          <li>L1 — przesuw (slide) w kierunku drążka; kopnięcie zaraz po przesuwie ma większy zasięg</li>
+          <li>R3 (klik prawego drążka) — zmiana postawy: po kopnięciu nogą zakroczną noga ląduje z przodu, a tułów obraca się na drugą stronę — jesteś odsłonięty, dopóki nie wrócisz R3</li>
+          <li id="list-guard"></li>
           <li>Prawy drążek — obrót · kliknięcie L3 — widok zawodnika z tyłu</li>
         </ul>
         <p>Kamera śledzi zawodnika zza ramienia jak w grze walki. Kliknij L3, aby przełączyć widok pierwszoosobowy.</p>
@@ -652,7 +682,7 @@
               { type: "slide", name: "Przesuw do przodu (L1)" },
               { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.5, source: "estimate" }
             ],
-            description: "Pierwsze kopnięcie możesz chybić — przesuń się bliżej i trafij drugim z nogi zakrocznej. Po nim noga ląduje z przodu: jesteś odsłonięty, wróć R1."
+            description: "Pierwsze kopnięcie możesz chybić — przesuń się bliżej i trafij drugim z nogi zakrocznej. Po nim noga ląduje z przodu: jesteś odsłonięty, wróć R3."
           },
           {
             title: "Kombinacja 8 · dwa przesuwy",
@@ -677,16 +707,16 @@
             title: "Kombinacja 10 · zmiana postawy",
             steps: [
               { name: "Pchające z nogi zakrocznej", leg: "back", referenceDistance: 1.8, source: "feedback" },
-              { type: "switch", name: "Powrót do postawy (R1)" },
+              { type: "switch", name: "Powrót do postawy (R3)" },
               { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.6, source: "feedback" }
             ],
-            description: "Pchające nogą zakroczną przenosi ją do przodu i odsłania Cię. Wróć w postawę R1, zanim kopniesz dalej."
+            description: "Pchające nogą zakroczną przenosi ją do przodu i odsłania Cię. Wróć w postawę R3, zanim kopniesz dalej."
           }
         ];
 
         const stepPrompt = (step) => step.type === "slide" ? `${step.name} · L1`
-          : step.type === "switch" ? `${step.name} · R1`
-          : `${step.name} · ${step.leg === "front" ? "✕" : "□"}`;
+          : step.type === "switch" ?           `${step.name} · R3`
+                    : `${step.name} · ${padLabel(step.leg === "front" ? "kickLead" : "kickRear")}`;
 
         const startScreen = document.querySelector("#start-screen");
         const scoreLabel = document.querySelector("#score");
@@ -710,6 +740,149 @@
         const soundToggles = document.querySelectorAll(".sound-toggle");
         const stanceLabel = document.querySelector("#stance-state");
         const keys = new Set();
+
+        // ---- Input bindings and player profiles ----
+        const PAD_NAMES = ["✕", "○", "□", "△", "L1", "R1", "L2", "R2", "Create", "Options", "L3", "R3", "↑", "↓", "←", "→", "PS", "Panel"];
+        // slide (L1), menu start, view (L3), stance switch (R3) and menu left/right stay fixed.
+        const RESERVED_PAD = new Set([4, 9, 10, 11, 14, 15]);
+        const RESERVED_KEYS = new Set(["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "e", "v", "escape"]);
+        const BINDABLE = [
+          { id: "kickLead", label: "Kopnięcie nogą wykroczną" },
+          { id: "kickRear", label: "Kopnięcie nogą zakroczną" },
+          { id: "guard", label: "Garda" }
+        ];
+        const LOCKED = {
+          slide: { pad: { b: 4, m: [] }, keys: [" "] },
+          switch: { pad: { b: 11, m: [] }, keys: ["e"] }
+        };
+        const PRESETS = {
+          A: {
+            name: "A · przyciski (✕ □ ○)",
+            bindings: {
+              kickLead: { pad: { b: 0, m: [] }, keys: ["j", "enter"] },
+              kickRear: { pad: { b: 2, m: [] }, keys: ["l"] },
+              guard: { pad: { b: 1, m: [] }, keys: ["k", "shift"] }
+            }
+          },
+          B: {
+            name: "B · spusty (R2 R1 L2)",
+            bindings: {
+              kickLead: { pad: { b: 7, m: [] }, keys: ["j", "enter"] },
+              kickRear: { pad: { b: 5, m: [] }, keys: ["l"] },
+              guard: { pad: { b: 6, m: [] }, keys: ["k", "shift"] }
+            }
+          }
+        };
+        const STORE_KEY = "tkd-profiles-v1";
+        const FORBIDDEN_NAMES = new Set(["__proto__", "constructor", "prototype"]);
+        const cloneBindings = (bindings) => JSON.parse(JSON.stringify(bindings));
+        const isPadIndex = (value) => Number.isInteger(value) && value >= 0 && value < PAD_NAMES.length && !RESERVED_PAD.has(value);
+
+        function sanitizeBindings(source) {
+          const result = cloneBindings(PRESETS.A.bindings);
+          for (const { id } of BINDABLE) {
+            const entry = source && source[id];
+            if (!entry) continue;
+            if (entry.pad && isPadIndex(entry.pad.b) && Array.isArray(entry.pad.m) && entry.pad.m.every(isPadIndex)) {
+              result[id].pad = { b: entry.pad.b, m: entry.pad.m.slice(0, 2) };
+            }
+            if (Array.isArray(entry.keys) && entry.keys.length && entry.keys.every((k) => typeof k === "string" && k && !RESERVED_KEYS.has(k.toLowerCase()))) {
+              result[id].keys = entry.keys.slice(0, 3).map((k) => k.toLowerCase());
+            }
+          }
+          return result;
+        }
+
+        function sanitizeProfile(source) {
+          const height = Number(source && source.heightCm);
+          return {
+            heightCm: Number.isFinite(height) ? Math.min(210, Math.max(120, Math.round(height))) : 170,
+            bindings: sanitizeBindings(source && source.bindings)
+          };
+        }
+
+        function loadStore() {
+          try {
+            const raw = JSON.parse(localStorage.getItem(STORE_KEY));
+            if (raw && raw.profiles && typeof raw.profiles === "object") {
+              const profiles = {};
+              for (const name of Object.keys(raw.profiles)) {
+                if (!FORBIDDEN_NAMES.has(name)) profiles[name] = sanitizeProfile(raw.profiles[name]);
+              }
+              const names = Object.keys(profiles);
+              if (names.length) {
+                return {
+                  active: profiles[raw.active] ? raw.active : names[0],
+                  profiles,
+                  log: Array.isArray(raw.log) ? raw.log.slice(-300) : []
+                };
+              }
+            }
+          } catch (error) {
+            console.error("Could not load saved profiles.", error);
+          }
+          let legacyHeight = 170;
+          try {
+            const saved = Number(localStorage.getItem("tkd-training-player-height-cm"));
+            if (Number.isFinite(saved) && saved >= 120 && saved <= 210) legacyHeight = saved;
+          } catch (error) {
+            console.error("Could not load saved player height.", error);
+          }
+          return { active: "Gracz 1", profiles: { "Gracz 1": sanitizeProfile({ heightCm: legacyHeight }) }, log: [] };
+        }
+
+        const store = loadStore();
+        let currentRound = null;
+        const activeProfile = () => store.profiles[store.active];
+
+        function saveStore() {
+          try {
+            localStorage.setItem(STORE_KEY, JSON.stringify(store));
+            return true;
+          } catch (error) {
+            console.error("Could not save profiles.", error);
+            return false;
+          }
+        }
+
+        function presetNameOf(bindings) {
+          const json = JSON.stringify(bindings);
+          return Object.keys(PRESETS).find((key) => JSON.stringify(PRESETS[key].bindings) === json) || "własny";
+        }
+
+        const activeBindings = () => ({ ...activeProfile().bindings, ...LOCKED });
+
+        function padLabel(id) {
+          const binding = activeBindings()[id];
+          if (!binding || !binding.pad) return "—";
+          return [...binding.pad.m, binding.pad.b].map((index) => PAD_NAMES[index]).join("+");
+        }
+
+        function keyLabel(id) {
+          const binding = activeBindings()[id];
+          const keyName = (key) => key === " " ? "Spacja" : key.length === 1 ? key.toUpperCase() : key[0].toUpperCase() + key.slice(1);
+          return binding && binding.keys.length ? binding.keys.map(keyName).join("/") : "—";
+        }
+
+        function evaluateActions(pad) {
+          const bindings = activeBindings();
+          const isDown = (index) => Boolean(pad && pad.buttons[index] && pad.buttons[index].pressed);
+          const result = {};
+          const padHits = [];
+          for (const id of Object.keys(bindings)) {
+            const binding = bindings[id];
+            result[id] = binding.keys.some((key) => keys.has(key));
+            if (binding.pad && isDown(binding.pad.b) && binding.pad.m.every(isDown)) {
+              padHits.push({ id, set: new Set([binding.pad.b, ...binding.pad.m]) });
+            }
+          }
+          // A binding that only uses a subset of a larger pressed combination is ignored (R1+□ must not also fire □).
+          for (const hit of padHits) {
+            const covered = padHits.some((other) => other !== hit && other.set.size > hit.set.size && [...hit.set].every((index) => other.set.has(index)));
+            if (!covered) result[hit.id] = true;
+          }
+          return result;
+        }
         let audioContext = null;
         let masterGain = null;
         let audioConnected = false;
@@ -1037,27 +1210,216 @@
           playerAvatar.scaling.set(1, heightScale, 1);
           updateRangeDescription();
           if (save) {
-            try {
-              localStorage.setItem("tkd-training-player-height-cm", String(playerHeightCm));
-              heightStatus.textContent = "Wzrost jest zapisany tylko lokalnie i skaluje szacowany zasięg w grze.";
-            } catch (error) {
-              console.error("Could not save player height locally.", error);
+            activeProfile().heightCm = playerHeightCm;
+            if (saveStore()) {
+              heightStatus.textContent = "Wzrost jest zapisany tylko lokalnie w profilu gracza i skaluje szacowany zasięg w grze.";
+            } else {
               heightStatus.textContent = "Nie udało się zapisać ustawienia; wzrost zadziała tylko do zamknięcia tej karty.";
             }
           }
         }
 
-        try {
-          const savedHeight = Number(localStorage.getItem("tkd-training-player-height-cm"));
-          if (Number.isFinite(savedHeight) && savedHeight >= 120 && savedHeight <= 210) {
-            heightInput.value = String(savedHeight);
-          }
-        } catch (error) {
-          console.error("Could not load saved player height.", error);
-          heightStatus.textContent = "Nie udało się odczytać lokalnego ustawienia wzrostu. Możesz ustawić je ponownie.";
-        }
+        heightInput.value = String(activeProfile().heightCm);
         heightInput.addEventListener("input", () => applyPlayerHeight(true));
         applyPlayerHeight();
+
+        // ---- Profile and binding UI ----
+        const profileSelect = document.querySelector("#profile-select");
+        const presetSelect = document.querySelector("#preset-select");
+        const bindingList = document.querySelector("#binding-list");
+        const bindingStatus = document.querySelector("#binding-status");
+        let capture = null;
+
+        const describeBinding = (id) => `${padLabel(id)} · ${keyLabel(id)}`;
+
+        function refreshHints() {
+          document.querySelector("#pad-hint").textContent = `DualSense: LS ruch · RS obrót · ${padLabel("kickLead")} noga wykroczna · ${padLabel("kickRear")} noga zakroczna · ${padLabel("guard")} garda · L1 przesuw · R3 zmiana postawy · L3 widok`;
+          document.querySelector("#key-hint").textContent = `Klawiatura: WASD ruch · ${keyLabel("kickLead")} noga wykroczna · ${keyLabel("kickRear")} noga zakroczna · ${keyLabel("guard")} garda · Spacja przesuw · E zmiana postawy · V widok`;
+          document.querySelector("#list-kicks").textContent = `${padLabel("kickLead")} — szybkie kopnięcie nogą wykroczną · ${padLabel("kickRear")} — mocniejsze kopnięcie nogą zakroczną`;
+          document.querySelector("#list-guard").textContent = `${padLabel("guard")} — trzymaj gardę podczas ataku partnera`;
+        }
+
+        function renderProfileUi() {
+          profileSelect.replaceChildren(...Object.keys(store.profiles).map((name) => {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            return option;
+          }));
+          profileSelect.value = store.active;
+          const current = presetNameOf(activeProfile().bindings);
+          presetSelect.replaceChildren(...[...Object.keys(PRESETS).map((key) => [key, PRESETS[key].name]), ["własny", "Własny"]].map(([value, text]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = text;
+            option.disabled = value === "własny" && current !== "własny";
+            return option;
+          }));
+          presetSelect.value = current;
+          const rows = BINDABLE.map(({ id, label }) => {
+            const name = document.createElement("span");
+            name.textContent = label;
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.action = id;
+            const capturing = capture && capture.id === id;
+            button.classList.toggle("capturing", Boolean(capturing));
+            button.textContent = capturing ? "Naciśnij przycisk lub klawisz…" : describeBinding(id);
+            return [name, button];
+          });
+          const locked = [["Przesuw (stały)", describeBinding("slide")], ["Zmiana nogi (stała)", describeBinding("switch")]].map(([text, value]) => {
+            const name = document.createElement("span");
+            name.textContent = text;
+            const note = document.createElement("span");
+            note.className = "locked";
+            note.textContent = value;
+            return [name, note];
+          });
+          bindingList.replaceChildren(...rows.concat(locked).flat());
+          refreshHints();
+          updateRangeDescription();
+        }
+
+        function setBindingStatus(text) {
+          bindingStatus.textContent = text;
+        }
+
+        function applyBinding(id, patch) {
+          const bindings = activeBindings();
+          const candidate = { ...bindings[id], ...patch };
+          for (const other of Object.keys(bindings)) {
+            if (other === id) continue;
+            const clash = (patch.pad && bindings[other].pad && JSON.stringify([...bindings[other].pad.m, bindings[other].pad.b].sort()) === JSON.stringify([...patch.pad.m, patch.pad.b].sort()))
+              || (patch.keys && patch.keys.some((key) => bindings[other].keys.includes(key)));
+            if (clash) {
+              const otherLabel = (BINDABLE.find((item) => item.id === other) || { label: other === "slide" ? "Przesuw" : "Zmiana nogi" }).label;
+              setBindingStatus(`To przypisanie jest już użyte: ${otherLabel}. Wybierz inne.`);
+              return false;
+            }
+          }
+          activeProfile().bindings[id] = { pad: candidate.pad, keys: candidate.keys };
+          saveStore();
+          setBindingStatus("Zapisano.");
+          return true;
+        }
+
+        function finishCapture() {
+          capture = null;
+          renderProfileUi();
+        }
+
+        function pollCapture(pad) {
+          if (!capture || !pad) return;
+          let anyDown = false;
+          pad.buttons.forEach((button, index) => {
+            if (!button.pressed) return;
+            anyDown = true;
+            if (RESERVED_PAD.has(index)) {
+              setBindingStatus(`${PAD_NAMES[index]} jest zarezerwowany — wybierz inny przycisk.`);
+            } else if (!capture.order.includes(index)) {
+              capture.order.push(index);
+            }
+          });
+          if (!anyDown && capture.order.length) {
+            const order = capture.order.slice(-3);
+            applyBinding(capture.id, { pad: { b: order[order.length - 1], m: order.slice(0, -1) } });
+            finishCapture();
+          }
+        }
+
+        function captureKey(event) {
+          event.preventDefault();
+          const key = event.key.toLowerCase();
+          if (key === "escape") {
+            setBindingStatus("Anulowano.");
+            finishCapture();
+            return;
+          }
+          if (RESERVED_KEYS.has(key)) {
+            setBindingStatus("Ten klawisz jest zarezerwowany (ruch, przesuw, zmiana nogi, widok).");
+            return;
+          }
+          const base = activeProfile().bindings[capture.id];
+          applyBinding(capture.id, { pad: base.pad, keys: [key] });
+          finishCapture();
+        }
+
+        function switchProfile(name) {
+          if (!store.profiles[name]) return;
+          store.active = name;
+          saveStore();
+          heightInput.value = String(activeProfile().heightCm);
+          applyPlayerHeight();
+          capture = null;
+          renderProfileUi();
+        }
+
+        bindingList.addEventListener("click", (event) => {
+          const id = event.target.dataset && event.target.dataset.action;
+          if (!id) return;
+          capture = capture && capture.id === id ? null : { id, order: [] };
+          setBindingStatus(capture ? "Naciśnij przycisk pada (trzymaj modyfikator, potem przycisk) lub klawisz. Esc anuluje." : "Anulowano.");
+          renderProfileUi();
+        });
+        presetSelect.addEventListener("change", () => {
+          if (!PRESETS[presetSelect.value]) return;
+          activeProfile().bindings = cloneBindings(PRESETS[presetSelect.value].bindings);
+          saveStore();
+          capture = null;
+          setBindingStatus(`Ustawiono układ ${PRESETS[presetSelect.value].name}.`);
+          renderProfileUi();
+        });
+        profileSelect.addEventListener("change", () => switchProfile(profileSelect.value));
+        document.querySelector("#profile-new").addEventListener("click", () => {
+          const name = (window.prompt("Imię gracza (nowy profil):") || "").trim().slice(0, 24);
+          if (!name || FORBIDDEN_NAMES.has(name)) return;
+          if (!store.profiles[name]) store.profiles[name] = sanitizeProfile({ heightCm: playerHeightCm, bindings: activeProfile().bindings });
+          switchProfile(name);
+        });
+        document.querySelector("#profile-delete").addEventListener("click", () => {
+          const names = Object.keys(store.profiles);
+          if (names.length < 2) {
+            setBindingStatus("Nie można usunąć ostatniego profilu.");
+            return;
+          }
+          if (!window.confirm(`Usunąć profil „${store.active}”?`)) return;
+          delete store.profiles[store.active];
+          switchProfile(Object.keys(store.profiles)[0]);
+        });
+        document.querySelector("#profiles-export").addEventListener("click", () => {
+          const blob = new Blob([JSON.stringify({ version: 1, active: store.active, profiles: store.profiles, log: store.log }, null, 2)], { type: "application/json" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "kickit-profile.json";
+          link.click();
+          URL.revokeObjectURL(link.href);
+        });
+        document.querySelector("#profiles-import-button").addEventListener("click", () => document.querySelector("#profiles-import").click());
+        document.querySelector("#profiles-import").addEventListener("change", async (event) => {
+          const file = event.target.files[0];
+          event.target.value = "";
+          if (!file) return;
+          try {
+            const data = JSON.parse(await file.text());
+            if (!data || typeof data.profiles !== "object" || !data.profiles) throw new Error("brak profili");
+            let imported = 0;
+            for (const name of Object.keys(data.profiles)) {
+              if (FORBIDDEN_NAMES.has(name)) continue;
+              let target = name.slice(0, 24);
+              while (store.profiles[target]) target = `${target.slice(0, 20)} (2)`;
+              store.profiles[target] = sanitizeProfile(data.profiles[name]);
+              imported += 1;
+            }
+            if (Array.isArray(data.log)) store.log = store.log.concat(data.log.slice(-300)).slice(-300);
+            saveStore();
+            setBindingStatus(`Zaimportowano profile: ${imported}.`);
+            renderProfileUi();
+          } catch (error) {
+            console.error("Profile import failed.", error);
+            setBindingStatus("Nie udało się wczytać pliku profilu.");
+          }
+        });
+        renderProfileUi();
 
         function setPhase(next, now) {
           phase = next;
@@ -1065,7 +1427,7 @@
             nextCue = now + 2500 + Math.random() * 1800;
             nextOpponentAttackAt = now + 900 + Math.random() * 700;
             titleLabel.textContent = `Obserwuj partnera · ${combos[selectedComboIndex].title}`;
-            descriptionLabel.textContent = "Obserwuj partnera. Gdy zacznie kopnąć, trzymaj ○, aby zasłonić się gardą.";
+            descriptionLabel.textContent = "Obserwuj partnera. Gdy zacznie kopnąć, trzymaj " + padLabel("guard") + ", aby zasłonić się gardą.";
             setCue("Zachowaj gotowość");
           } else if (next === "opening") {
             phaseEnds = now + 15000;
@@ -1073,7 +1435,7 @@
             nextOpponentAttackAt = Infinity;
             updateRangeDescription();
             titleLabel.textContent = `Twoja sekwencja · ${combos[selectedComboIndex].title}`;
-            descriptionLabel.textContent = "✕ szybka noga wykroczna, □ wolniejsza zakroczna (po niej zmienia się postawa), L1 przesuw, R1 powrót w postawę.";
+            descriptionLabel.textContent = `${padLabel("kickLead")} szybka noga wykroczna, ${padLabel("kickRear")} wolniejsza zakroczna (po niej zmienia się postawa), L1 przesuw, R3 powrót w postawę.`;
             setCue(`WEJDŹ · ${stepPrompt(combos[selectedComboIndex].steps[comboStep])}`, "warning");
           } else if (next === "retreat") {
             phaseEnds = now + 3500;
@@ -1095,6 +1457,11 @@
         function updateHud() {
           scoreLabel.textContent = `${reps}/5`;
           streakLabel.textContent = String(streak);
+          if (currentRound) {
+            currentRound.reps = reps;
+            currentRound.bestStreak = Math.max(currentRound.bestStreak, streak);
+            saveStore();
+          }
         }
 
         function beginRound() {
@@ -1103,6 +1470,10 @@
           streak = 0;
           comboStep = 0;
           feedback = "";
+          currentRound = { at: new Date().toISOString(), player: store.active, layout: presetNameOf(activeProfile().bindings), combo: combos[selectedComboIndex].title, reps: 0, bestStreak: 0 };
+          store.log.push(currentRound);
+          if (store.log.length > 300) store.log.splice(0, store.log.length - 300);
+          saveStore();
           updateHud();
           playerPosition.set(0, 0, -3.1);
           playerYaw = 0;
@@ -1286,7 +1657,7 @@
           playSlideSound();
           if (phase === "opening" && getCurrentStep().type === "switch") {
             if (stanceSwapped) {
-              feedback = "Zmieniłeś postawę — teraz wróć R1, zanim ruszysz dalej.";
+              feedback = "Zmieniłeś postawę — teraz wróć R3, zanim ruszysz dalej.";
               feedbackUntil = now + 1200;
               setCue(feedback, "warning");
             } else {
@@ -1308,13 +1679,13 @@
           addImpulse(new BABYLON.Vector3(Math.sin(playerYaw), 0, Math.cos(playerYaw)), leg === "front" ? 0.14 : 0.32, kickDuration, now);
           const step = getCurrentStep();
           if (step.type) {
-            feedback = step.type === "slide" ? "Najpierw przesuw (L1) w stronę partnera." : "Najpierw wróć w postawę (R1).";
+            feedback = step.type === "slide" ? "Najpierw przesuw (L1) w stronę partnera." : "Najpierw wróć w postawę (R3).";
             feedbackUntil = now + 1200;
             setCue(feedback, "warning");
             return;
           }
           if (step.leg !== leg) {
-            feedback = `Użyj nogi ${step.leg === "front" ? "wykrocznej ✕" : "zakrocznej □"} do tego ruchu.`;
+            feedback = `Użyj nogi ${step.leg === "front" ? "wykrocznej" : "zakrocznej"} ${padLabel(step.leg === "front" ? "kickLead" : "kickRear")} do tego ruchu.`;
             feedbackUntil = now + 1200;
             setCue(feedback, "warning");
             return;
@@ -1366,11 +1737,6 @@
             strafe += deadzone(pad.axes[0] || 0);
             forward -= deadzone(pad.axes[1] || 0);
             turn += deadzone(pad.axes[2] || 0);
-            frontKickPressed = Boolean(pad.buttons[0]?.pressed);
-            backKickPressed = Boolean(pad.buttons[2]?.pressed);
-            guardPressed = Boolean(pad.buttons[1]?.pressed);
-            slidePressed = Boolean(pad.buttons[4]?.pressed || pad.buttons[6]?.pressed);
-            switchPressed = Boolean(pad.buttons[5]?.pressed || pad.buttons[7]?.pressed || pad.buttons[11]?.pressed);
             viewTogglePressed = Boolean(pad.buttons[10]?.pressed);
             menuLeftPressed = Boolean(pad.buttons[14]?.pressed);
             menuRightPressed = Boolean(pad.buttons[15]?.pressed);
@@ -1384,11 +1750,13 @@
           if (keys.has("s") || keys.has("arrowdown")) forward -= 1;
           if (keys.has("a") || keys.has("arrowleft")) strafe -= 1;
           if (keys.has("d") || keys.has("arrowright")) strafe += 1;
-          if (keys.has("j") || keys.has("enter")) frontKickPressed = true;
-          if (keys.has("l")) backKickPressed = true;
-          if (keys.has(" ")) slidePressed = true;
-          if (keys.has("e")) switchPressed = true;
-          guarding = keys.has("k") || keys.has("shift") || guardPressed;
+          const actions = evaluateActions(pad);
+          frontKickPressed = actions.kickLead;
+          backKickPressed = actions.kickRear;
+          slidePressed = actions.slide;
+          switchPressed = actions.switch;
+          guarding = actions.guard;
+          pollCapture(pad);
           if (viewTogglePressed && !previousViewTogglePressed) firstPerson = !firstPerson;
           previousViewTogglePressed = viewTogglePressed;
           const menuVisible = !startScreen.classList.contains("hidden");
@@ -1449,7 +1817,7 @@
             opponentAttackImpactAt = now + 850;
             opponentAttackUntil = now + 1250;
             nextOpponentAttackAt = Infinity;
-            setCue("PARTNER KOPIE — trzymaj ○, aby zasłonić się gardą!", "danger");
+            setCue(`PARTNER KOPIE — trzymaj ${padLabel("guard")}, aby zasłonić się gardą!`, "danger");
           }
           if (running && now >= opponentAttackImpactAt) {
             opponentAttackImpactAt = Infinity;
@@ -1457,11 +1825,11 @@
             if (guarding && !stanceSwapped) {
               opponentAttackFeedback = "Dobra garda — zablokowałeś kopnięcie partnera.";
             } else if (stanceSwapped) {
-              opponentAttackFeedback = "Trafienie! Odsłonięta strona po kopnięciu zakrocznym — wróć w postawę (R1).";
+              opponentAttackFeedback = "Trafienie! Odsłonięta strona po kopnięciu zakrocznym — wróć w postawę (R3).";
               streak = 0;
               updateHud();
             } else {
-              opponentAttackFeedback = "Trafienie! Następnym razem trzymaj ○ podczas ataku.";
+              opponentAttackFeedback = "Trafienie! Następnym razem trzymaj " + padLabel("guard") + " podczas ataku.";
               streak = 0;
               updateHud();
             }
@@ -1670,6 +2038,10 @@
         }
 
         window.addEventListener("keydown", (event) => {
+          if (capture) {
+            captureKey(event);
+            return;
+          }
           const key = event.key.toLowerCase();
           if (key === "v" && !event.repeat) firstPerson = !firstPerson;
           keys.add(key);
