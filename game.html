@@ -1123,6 +1123,21 @@
           running = true;
         }
 
+        // Average of 12 real front kicks (6 per leg) recorded with the camera analyser; angles in degrees.
+        const FRONT_KICK = {
+          hip: [153, 137, 117, 100, 82, 70, 63, 59, 56, 53, 50, 52, 56, 65, 75, 86, 95, 105, 118, 130, 141, 152, 162, 165],
+          knee: [113, 100, 89, 81, 72, 76, 87, 108, 133, 149, 157, 159, 152, 146, 134, 127, 115, 111, 110, 111, 114, 119, 128, 132]
+        };
+        const sampleFrontKick = (progress) => {
+          const pos = BABYLON.Scalar.Clamp(progress, 0, 1) * (FRONT_KICK.hip.length - 1);
+          const i = Math.min(FRONT_KICK.hip.length - 2, Math.floor(pos));
+          const f = pos - i;
+          return {
+            hip: FRONT_KICK.hip[i] + (FRONT_KICK.hip[i + 1] - FRONT_KICK.hip[i]) * f,
+            knee: FRONT_KICK.knee[i] + (FRONT_KICK.knee[i + 1] - FRONT_KICK.knee[i]) * f
+          };
+        };
+
         let replay = null;
         const replayBar = document.querySelector("#replay-bar");
         const smoothSeries = (values, radius = 2) => values.map((_, i) => {
@@ -1225,7 +1240,7 @@
           const leadIsLeft = !stanceSwapped;
           activeKickPivot = (leg === "front") === leadIsLeft ? avatarLeftLegPivot : avatarRightLegPivot;
           kickStart = now;
-          kickDuration = leg === "front" ? 340 : 570;
+          kickDuration = leg === "front" ? 560 : 570;
           kickUntil = now + kickDuration;
           pendingSwapAt = leg === "back" ? now + 50 : Infinity;
         }
@@ -1582,10 +1597,20 @@
             }
             if (kickActive && pivot === activeKickPivot) {
               const frontKick = activeKickLeg === "front";
-              // Chamber (knee bent) first, then snap the shin out, then retract.
-              const snap = Math.sin(Math.PI * BABYLON.Scalar.Clamp((kickProgress - 0.25) / 0.5, 0, 1));
-              hip = -extension * (frontKick ? 0.95 : 1.3);
-              knee = 0.15 + 1.6 * extension * (1 - snap);
+              if (frontKick) {
+                // Recorded front kick, blended in and out of the idle pose at both ends.
+                const sample = sampleFrontKick(kickProgress);
+                const edge = BABYLON.Scalar.Clamp(Math.min(kickProgress, 1 - kickProgress) / 0.15, 0, 1);
+                const mix = edge * edge * (3 - 2 * edge);
+                const toRad = Math.PI / 180;
+                hip = hip * (1 - mix) - BABYLON.Scalar.Clamp(180 - sample.hip, 0, 140) * toRad * mix;
+                knee = knee * (1 - mix) + BABYLON.Scalar.Clamp(180 - sample.knee, 0, 150) * toRad * mix;
+              } else {
+                // Chamber (knee bent) first, then snap the shin out, then retract.
+                const snap = Math.sin(Math.PI * BABYLON.Scalar.Clamp((kickProgress - 0.25) / 0.5, 0, 1));
+                hip = -extension * 1.3;
+                knee = 0.15 + 1.6 * extension * (1 - snap);
+              }
             }
             pivot.rotation.x = hip;
             pivot.knee.rotation.x = knee;
