@@ -263,6 +263,13 @@
       button:hover { background: #70dc92; }
       .hidden { display: none !important; }
       .disclaimer { margin-bottom: 0; font-size: 12px; }
+      .replay-load { display: block; margin: 14px 0 6px; font-size: 13px; color: #b9c7d6; }
+      .replay-load input { display: block; margin-top: 6px; }
+      .replay-mode .hud, .replay-mode .lesson, .replay-mode .bottom { display: none !important; }
+      #replay-title { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #replay-bar { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; background: rgba(20, 26, 34, 0.9); color: #e8eef5; padding: 8px 12px; border-radius: 10px; font-size: 13px; z-index: 5; }
+      #replay-bar button { background: #2a3644; color: inherit; border: 1px solid #3b4a5c; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+      #replay-bar button.active { background: #e63946; border-color: #e63946; }
 
       @media (max-width: 600px) {
         .hud { padding: 12px; }
@@ -342,8 +349,16 @@
         </ul>
         <p>Kamera śledzi zawodnika zza ramienia jak w grze walki. Kliknij L3, aby przełączyć widok pierwszoosobowy.</p>
         <button id="start-button" type="button">Rozpocznij trening</button>
+        <label class="replay-load">Odtwórz własne nagranie (CSV z analizy kamery): <input id="replay-file" type="file" accept=".csv,text/csv"></label>
         <p class="disclaimer">Tryb ćwiczy kolejność, rytm i reakcję; dźwięki są generowane w grze, a animacje nie oceniają techniki. Trenuj z trenerem, w bezpiecznych warunkach.</p>
       </div>
+    </div>
+    <div id="replay-bar" class="hidden">
+      <span id="replay-title">Odtwarzanie nagrania</span>
+      <button type="button" data-speed="1">1×</button>
+      <button type="button" data-speed="0.5">0.5×</button>
+      <button type="button" data-speed="0.25">0.25×</button>
+      <button type="button" id="replay-exit">Wyjście (Esc)</button>
     </div>
 
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -1108,6 +1123,89 @@
           running = true;
         }
 
+        let replay = null;
+        const replayBar = document.querySelector("#replay-bar");
+        const smoothSeries = (values, radius = 2) => values.map((_, i) => {
+          let sum = 0, count = 0;
+          for (let j = Math.max(0, i - radius); j <= Math.min(values.length - 1, i + radius); j += 1) {
+            if (Number.isFinite(values[j])) { sum += values[j]; count += 1; }
+          }
+          return count ? sum / count : NaN;
+        });
+
+        function loadReplay(text, name) {
+          const lines = text.trim().split(/\r?\n/);
+          const cols = lines[0].split(",");
+          const idx = Object.fromEntries(cols.map((c, i) => [c, i]));
+          if (!["t", "kneeL", "kneeR", "hipFlexL", "hipFlexR"].every((c) => c in idx)) {
+            alert("To nie wygląda na plik CSV z analizy kamery (brak kolumn kneeL/hipFlexL).");
+            return;
+          }
+          const rows = lines.slice(1).map((line) => line.split(",").map(Number));
+          const series = (c) => smoothSeries(rows.map((r) => r[idx[c]]));
+          const t0 = rows[0][idx.t];
+          replay = {
+            name,
+            t: rows.map((r) => r[idx.t] - t0),
+            kneeL: series("kneeL"), kneeR: series("kneeR"),
+            hipFlexL: series("hipFlexL"), hipFlexR: series("hipFlexR"),
+            speed: 0.5,
+            start: performance.now()
+          };
+          replay.duration = replay.t[replay.t.length - 1];
+          document.querySelector("#replay-title").textContent = `Nagranie: ${name} · ${replay.duration.toFixed(0)} s`;
+          setReplaySpeed(0.5);
+          startScreen.classList.add("hidden");
+          replayBar.classList.remove("hidden");
+          document.body.classList.add("replay-mode");
+          running = false;
+          stanceSwapped = false;
+          stanceBlend = 0;
+          torsoBlend = 0;
+          playerPosition.set(0, 0, -3.1);
+          playerYaw = 0;
+          firstPerson = false;
+          setCue("Odtwarzanie nagrania", "");
+        }
+
+        function setReplaySpeed(speed) {
+          if (!replay) return;
+          replay.start = performance.now() - (replay.pos || 0) / speed * 1000;
+          replay.speed = speed;
+          replayBar.querySelectorAll("[data-speed]").forEach((b) => b.classList.toggle("active", Number(b.dataset.speed) === speed));
+        }
+
+        function exitReplay() {
+          replay = null;
+          replayBar.classList.add("hidden");
+          document.body.classList.remove("replay-mode");
+          startScreen.classList.remove("hidden");
+        }
+
+        // Recorded joint angles drive the avatar legs: 180° hip/knee angle means a straight leg.
+        function applyReplayPose(now) {
+          const pos = ((now - replay.start) / 1000 * replay.speed) % replay.duration;
+          replay.pos = pos;
+          let lo = 0, hi = replay.t.length - 1;
+          while (hi - lo > 1) {
+            const mid = (lo + hi) >> 1;
+            if (replay.t[mid] <= pos) lo = mid; else hi = mid;
+          }
+          const span = replay.t[hi] - replay.t[lo];
+          const f = span > 0 ? Math.min(1, (pos - replay.t[lo]) / span) : 0;
+          const at = (series) => {
+            const a = series[lo], b = series[hi];
+            return Number.isFinite(a) && Number.isFinite(b) ? a + (b - a) * f : (Number.isFinite(a) ? a : b);
+          };
+          const toRad = Math.PI / 180;
+          for (const [pivot, side] of [[avatarLeftLegPivot, "L"], [avatarRightLegPivot, "R"]]) {
+            const hipFlex = at(replay[`hipFlex${side}`]);
+            const knee = at(replay[`knee${side}`]);
+            if (Number.isFinite(hipFlex)) pivot.rotation.x = -BABYLON.Scalar.Clamp(180 - hipFlex, 0, 140) * toRad;
+            if (Number.isFinite(knee)) pivot.knee.rotation.x = BABYLON.Scalar.Clamp(180 - knee, 0, 150) * toRad;
+          }
+        }
+
         function getGamepad() {
           const pads = navigator.getGamepads ? navigator.getGamepads() : [];
           if (activeGamepadIndex !== null && pads[activeGamepadIndex]) return pads[activeGamepadIndex];
@@ -1492,6 +1590,7 @@
             pivot.rotation.x = hip;
             pivot.knee.rotation.x = knee;
           }
+          if (replay) applyReplayPose(now);
           if (kickActive) {
             playerAvatar.position.y = playerBounce + extension * 0.08 + motionDip;
             playerAvatar.rotation.x = playerLean + defenseLean - extension * 0.12;
@@ -1523,6 +1622,10 @@
             camera.position.set(playerPosition.x, 1.65 * (playerHeightCm / referenceHeightCm) + playerBounce, playerPosition.z);
             camera.rotation.y = playerYaw;
             camera.setTarget(camera.position.add(forwardVector.scale(1.7)).add(new BABYLON.Vector3(0, 0.05 * (playerHeightCm / referenceHeightCm), 0)));
+          } else if (replay) {
+            // Side view shows leg height and knee bend best.
+            camera.position.set(playerPosition.x + 5.2, 1.0, playerPosition.z + 0.5);
+            camera.setTarget(new BABYLON.Vector3(playerPosition.x, 0.85, playerPosition.z + 0.5));
           } else {
             const followPosition = playerPosition
               .subtract(forwardVector.scale(4.1))
@@ -1557,7 +1660,17 @@
         window.addEventListener("gamepaddisconnected", (event) => {
           if (activeGamepadIndex === event.gamepad.index) activeGamepadIndex = null;
         });
-        document.querySelector("#start-button").addEventListener("click", beginRound);
+        document.querySelector("#start-button").addEventListener("click", () => { replay = null; replayBar.classList.add("hidden"); document.body.classList.remove("replay-mode"); beginRound(); });
+        document.querySelector("#replay-file").addEventListener("change", async (event) => {
+          const file = event.target.files[0];
+          if (file) loadReplay(await file.text(), file.name);
+          event.target.value = "";
+        });
+        replayBar.addEventListener("click", (event) => {
+          if (event.target.dataset.speed) setReplaySpeed(Number(event.target.dataset.speed));
+          if (event.target.id === "replay-exit") exitReplay();
+        });
+        window.addEventListener("keydown", (event) => { if (event.key === "Escape" && replay) exitReplay(); });
         engine.runRenderLoop(() => {
           update(performance.now());
           scene.render();
