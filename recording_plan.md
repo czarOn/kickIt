@@ -80,7 +80,7 @@ The coach's quality score per take is what lets us later compare the camera numb
 
 ### Optional pose-point reference capture
 
-In [the camera analyzer](./pose.html), start the camera or play a video you have permission to use, then use **Start point capture** and **Stop capture**. **Export points JSON** downloads estimated MediaPipe image and world landmarks with relative timestamps; it does not include video frames. Capture is limited to 120 seconds or 3,600 detected frames, whichever comes first. The points remain in memory until deleted, the source is reset, or the page closes; the exported file remains wherever you save it.
+In [the camera analyzer](./pose.html), start the camera or play a video you have permission to use, then use **Start point capture** and **Stop capture**. **Export points JSON** downloads all 33 estimated MediaPipe image and world landmarks with relative timestamps; it does not include video frames. Up to 24 samples per second are stored, for at most 120 seconds or 3,600 detected samples, whichever comes first. The actual rate can be lower due to camera or device performance. Check the full-body visibility message throughout the form; it is an estimate, and low-visibility points are still saved. The points remain in memory until deleted, the source is reset, or the page closes; the exported file remains wherever you save it.
 
 For a hands-free camera start, select **Start on two claps**, allow the microphone, stand in the intended starting position, and clap twice roughly half a second apart. Wait until the status says point capture is active before moving. **Stop capture** cancels the wait; manual capture remains available. The microphone is used only while waiting, is processed locally, and audio is neither recorded nor uploaded. The trigger detects loud transient sounds, not claps with certainty: noise can trigger it or quiet claps may be missed. Microphone permission or a model refresh can fail; existing points remain available and manual capture can be used instead.
 
@@ -89,6 +89,12 @@ After the second sound, the analyzer creates a fresh pose landmarker and clears 
 Use the camera with the whole person visible and have a coach review the reference. Pose points may identify an individual: obtain a parent's permission before capturing a child, share files only deliberately, and delete them when no longer needed. This is reference data, not a Poomsae lesson or a technique assessment. The analyzer still requires an internet connection to load its model and library.
 
 The analyzer also includes an unvalidated four-step Taegeuk Il Jang learning pilot with manual progression. A previously exported reference JSON can be loaded and replayed as a mirrored skeleton. The reference currently plays as one sequence, not as individual step demonstrations; no automatic technique grading or progression is available. Verify the instructions with a coach.
+
+### Poomsae 3D playback
+
+Open [Poomsae playback](./poomsae.html) from the home page or sparring game and select the `pose-landmarks.json` exported by **Export points JSON**. The browser reads it locally; playback does not upload it. Play, pause, restart, scrub or change speed, and drag the scene to rotate the view. The camera analyzer and playback use the same pose recording validation and timestamp lookup.
+
+The 3D dobok avatar uses estimated image and world landmarks. It is not a recognition or grading system: body proportions, orientation and movement are approximate. Movement across the image is approximated; global camera depth and exact foot contact are not recorded. Low-visibility body parts are hidden, and gaps over 0.25 seconds hide the avatar rather than fabricate motion. The existing kick `frames.csv` and `kicks.json` exports contain measurements, not full-body coordinates, and cannot reproduce the form. Babylon.js and MediaPipe are currently loaded from the network. The file remains in memory until replaced or the page closes.
 
 1. **Analyser tuning:** thresholds for kick detection per kick type (foot height, knee angle range, duration, hip/shoulder twist) in [pose.html](./pose.html).
 2. **Reference ranges:** measured values per kick and player height, replacing the provisional numbers in [training_feedback.md](./training_feedback.md).

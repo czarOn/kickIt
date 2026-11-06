@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Motion tracker tests</title>
+<pre id="result">Running…</pre>
+<script src="../motion-tracker.js"></script>
+<script>
+  (() => {
+    const assert = (condition, message) => { if (!condition) throw new Error(message); };
+    const points = (x, visibility = 1) => Array.from({ length: 33 }, () => ({ x, y: 0, z: 0, visibility }));
+    const frame = (timeSeconds, x, visibility) => ({ timeSeconds, landmarks: points(x, visibility), worldLandmarks: points(x, visibility) });
+    const data = { format: "kickit-pose-landmarks", version: 1, frames: [frame(0, 0), frame(.1, 1, .5), frame(1, 2)] };
+    try {
+      assert(KickitMotion.validate(data, { requireWorld: true }), "valid recording rejected");
+      assert(!KickitMotion.validate({ kicks: [] }, { requireWorld: true }), "kick export accepted");
+      assert(!KickitMotion.validate({ ...data, frames: [data.frames[1], data.frames[0]] }), "non-monotonic timestamps accepted");
+      const noWorld = { ...data, frames: data.frames.map(({ worldLandmarks, ...rest }) => rest) };
+      assert(KickitMotion.validate(noWorld), "image-only instructor reference rejected");
+      assert(!KickitMotion.validate(noWorld, { requireWorld: true }), "missing world points accepted");
+      const result = KickitMotion.sample(data.frames, .05);
+      assert(Math.abs(result.frame.worldLandmarks[0].x - .5) < 1e-8, "interpolation incorrect");
+      assert(result.frame.landmarks[0].visibility === .5, "visibility interpolation is not conservative");
+      assert(KickitMotion.sample(data.frames, .5).gap, "long gap not detected");
+      assert(!KickitMotion.sample(data.frames, 1).gap, "last frame unavailable");
+      assert(KickitMotion.frameIndex(data.frames, .12) === 1, "frame lookup incorrect");
+      document.querySelector("#result").textContent = "PASS";
+    } catch (error) {
+      document.querySelector("#result").textContent = `FAIL: ${error.message}`;
+      throw error;
+    }
+  })();
+</script>

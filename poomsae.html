@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Poomsae playback — KickIt</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #10151d; color: #eef3f8; }
+    body { margin: 0; }
+    main { max-width: 1050px; margin: auto; padding: 16px; }
+    header, .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    header { justify-content: space-between; }
+    h1 { margin: 8px 0; font-size: 1.4rem; }
+    a { color: #9de7ba; }
+    p { color: #c2cedb; line-height: 1.45; }
+    select, button, input { font: inherit; }
+    select, button { border: 1px solid #536376; border-radius: 6px; padding: 7px 10px; background: #263545; color: white; }
+    button:disabled { opacity: .5; }
+    .viewer { height: min(58vh, 570px); min-height: 300px; border-radius: 10px; overflow: hidden; background: #b6c1ca; }
+    canvas { width: 100%; height: 100%; touch-action: none; display: block; }
+    .controls { padding: 12px 0; }
+    #seek { flex: 1 1 200px; min-width: 120px; }
+    #status { min-height: 1.5em; color: #ffda8b; }
+    .note { font-size: .9rem; }
+    @media (max-width: 600px) { main { padding: 10px; } .viewer { min-height: 260px; height: 44vh; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 data-i18n="title">Poomsae playback</h1>
+    <label><span data-i18n="language">Language</span>
+      <select id="language"><option value="en">🇬🇧 English</option><option value="pl">🇵🇱 Polski</option><option value="ko">🇰🇷 한국어</option></select>
+    </label>
+  </header>
+  <p><a href="game.html" data-i18n="game">← Sparring game</a> · <a href="pose.html" data-i18n="analyzer">Camera analyzer</a></p>
+  <p data-i18n="intro">Load pose-landmarks.json exported from the camera analyzer. Files remain on your device.</p>
+  <div class="row"><label for="file" data-i18n="file">Pose points JSON:</label><input id="file" type="file" accept=".json,application/json"></div>
+  <p id="status" role="status"></p>
+  <div class="viewer"><canvas id="canvas" tabindex="0" data-i18n-aria="canvas" aria-label="3D Poomsae avatar"></canvas></div>
+  <div class="row controls">
+    <button id="play" disabled data-i18n="play">Play</button>
+    <button id="pause" disabled data-i18n="pause">Pause</button>
+    <button id="restart" disabled data-i18n="restart">Restart</button>
+    <label for="seek" data-i18n="seek">Position</label>
+    <input id="seek" type="range" min="0" max="0" step="0.01" value="0" disabled>
+    <output id="time">0.0 / 0.0 s</output>
+    <label for="speed" data-i18n="speed">Speed</label>
+    <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option></select>
+  </div>
+  <p class="note" data-i18n="limitations">Experimental reconstruction, not technique recognition or assessment. Turn the view by dragging. Hidden or uncertain joints and long gaps are not reconstructed. Screen movement is approximate; camera depth and exact foot contact cannot be recovered from these recordings.</p>
+  <p class="note" data-i18n="formats">The kick CSV and kicks JSON do not contain arm or full-body points and cannot reproduce choreography. In the analyzer, stop point capture and choose “Export points JSON”.</p>
+</main>
+<script src="motion-tracker.js"></script>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="poomsae.js"></script>
+</body>
+</html>
