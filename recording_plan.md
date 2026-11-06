@@ -78,6 +78,14 @@ The coach's quality score per take is what lets us later compare the camera numb
 
 ## 6. What the recordings will be used for
 
+### Optional pose-point reference capture
+
+In [the camera analyzer](./pose.html), start the camera or play a video you have permission to use, then use **Start point capture** and **Stop capture**. **Export points JSON** downloads estimated MediaPipe image and world landmarks with relative timestamps; it does not include video frames. Capture is limited to 120 seconds or 3,600 detected frames, whichever comes first. The points remain in memory until deleted, the source is reset, or the page closes; the exported file remains wherever you save it.
+
+Use the camera with the whole person visible and have a coach review the reference. Pose points may identify an individual: obtain a parent's permission before capturing a child, share files only deliberately, and delete them when no longer needed. This is reference data, not a Poomsae lesson or a technique assessment. The analyzer still requires an internet connection to load its model and library.
+
+The analyzer also includes an unvalidated four-step Taegeuk Il Jang learning pilot with manual progression. A previously exported reference JSON can be loaded and replayed as a mirrored skeleton. The reference currently plays as one sequence, not as individual step demonstrations; no automatic technique grading or progression is available. Verify the instructions with a coach.
+
 1. **Analyser tuning:** thresholds for kick detection per kick type (foot height, knee angle range, duration, hip/shoulder twist) in [pose.html](./pose.html).
 2. **Reference ranges:** measured values per kick and player height, replacing the provisional numbers in [training_feedback.md](./training_feedback.md).
 3. **Lesson clips:** short, labelled examples of each kick for the parent lesson.

@@ -10,3 +10,4 @@ OIP-*.jpg
 perspective.jpg
 frames*.csv
 kicks*.json
+pose-landmarks*.json
