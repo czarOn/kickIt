@@ -11,3 +11,5 @@ perspective.jpg
 frames*.csv
 kicks*.json
 pose-landmarks*.json
+ios/CameraPositioning/*.xcodeproj/
+ios/CameraPositioning/Info.plist
