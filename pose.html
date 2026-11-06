@@ -124,11 +124,13 @@
         <p class="note" data-i18n="skeletonSaveNote">Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
         <div class="row">
           <button id="skeletonStart" disabled data-i18n="skeletonStart">Start point capture</button>
+          <button id="clapStart" disabled data-i18n="clapStart">Start on two claps</button>
           <button id="skeletonStop" disabled data-i18n="skeletonStop">Stop capture</button>
           <button id="skeletonExport" disabled data-i18n="skeletonExport">Export points JSON</button>
           <button id="skeletonClear" disabled data-i18n="skeletonClear">Delete points</button>
         </div>
         <p id="skeletonStatus" role="status"></p>
+        <p class="note" data-i18n="clapNote">Optional: allow microphone access, stand in position and clap twice, about half a second apart. Audio is analyzed locally, never recorded or uploaded. Wait for the recording status before moving; background noise may trigger or mask claps.</p>
       </div>
       <div class="panel">
         <h2 data-i18n="detected">Detected kicks</h2>
@@ -210,6 +212,18 @@
       }
     };
     const languageSelect = document.getElementById("language");
+    Object.assign(translations.en, {
+      clapStart: "Start on two claps", clapNote: "Optional: allow microphone access, stand in position and clap twice, about half a second apart. Audio is analyzed locally, never recorded or uploaded. Wait for the recording status before moving; background noise may trigger or mask claps.",
+      clapRequest: "Waiting for microphone permission…", clapWaiting: "Listening for two claps; use Stop to cancel.", clapFirst: "First sound detected — clap once more.", clapReset: "Two claps detected. Refreshing pose tracking; wait for recording.", clapFailed: "Microphone or pose refresh failed. Try again or use manual start.", clapCancelled: "Clap start cancelled. Existing points were kept."
+    });
+    Object.assign(translations.pl, {
+      clapStart: "Start po dwóch klaśnięciach", clapNote: "Opcjonalnie: zezwól na mikrofon, ustaw się w kadrze i klaśnij dwa razy w odstępie około pół sekundy. Dźwięk jest analizowany lokalnie, nie jest nagrywany ani wysyłany. Zaczekaj na informację o nagrywaniu; hałas może zakłócić rozpoznanie.",
+      clapRequest: "Oczekiwanie na zgodę na mikrofon…", clapWaiting: "Nasłuchiwanie dwóch klaśnięć; przyciskiem Stop możesz anulować.", clapFirst: "Wykryto pierwszy dźwięk — klaśnij ponownie.", clapReset: "Wykryto dwa klaśnięcia. Odświeżanie śledzenia pozy; zaczekaj na nagrywanie.", clapFailed: "Nie udało się uruchomić mikrofonu lub odświeżyć śledzenia. Spróbuj ponownie albo użyj startu ręcznego.", clapCancelled: "Anulowano start po klaśnięciach. Zachowano poprzednie punkty."
+    });
+    Object.assign(translations.ko, {
+      clapStart: "두 번 박수로 시작", clapNote: "선택 사항: 마이크를 허용하고 위치를 잡은 뒤 약 0.5초 간격으로 두 번 박수를 치세요. 소리는 기기에서만 분석되며 녹음하거나 전송하지 않습니다. 기록 상태가 표시될 때까지 기다리세요. 주변 소음이 인식에 영향을 줄 수 있습니다.",
+      clapRequest: "마이크 권한을 기다리는 중…", clapWaiting: "두 번의 박수를 기다리는 중입니다. 중지 버튼으로 취소할 수 있습니다.", clapFirst: "첫 소리 감지 — 한 번 더 박수를 치세요.", clapReset: "두 번의 박수 감지. 자세 추적을 새로 시작합니다. 기록을 기다리세요.", clapFailed: "마이크 또는 자세 추적을 시작하지 못했습니다. 다시 시도하거나 수동으로 시작하세요.", clapCancelled: "박수 시작을 취소했습니다. 기존 점은 유지됩니다."
+    });
     let language = "en", statusKey = "loading", storageFailed = false;
     const t = (key) => translations[language][key];
     function renderStatus() {
@@ -401,13 +415,139 @@
     const skeleton = { recording: false, frames: [], start: 0, last: 0, status: "skeletonIdle" };
     const MAX_SKELETON_SECONDS = 120;
     const MAX_SKELETON_FRAMES = 3600;
+    const clap = { phase: "idle", generation: 0, microphone: null, context: null, raf: 0 };
+
+    function releaseMicrophone() {
+      if (clap.raf) cancelAnimationFrame(clap.raf);
+      clap.raf = 0;
+      if (clap.microphone) clap.microphone.getTracks().forEach((track) => track.stop());
+      clap.microphone = null;
+      if (clap.context) {
+        clap.context.close().catch((error) => console.error("Could not close microphone audio context.", error));
+        clap.context = null;
+      }
+    }
+
+    function stopClap() {
+      clap.generation += 1;
+      clap.phase = "idle";
+      releaseMicrophone();
+    }
+
+    function beginSkeleton() {
+      skeleton.frames = [];
+      skeleton.start = stream ? performance.now() / 1000 : video.currentTime;
+      skeleton.last = skeleton.start;
+      skeleton.recording = true;
+      skeleton.status = "skeletonActive";
+      renderSkeleton();
+    }
+
+    async function resetTrackingAndBegin(generation) {
+      clap.phase = "resetting";
+      releaseMicrophone();
+      skeleton.status = "clapReset";
+      renderSkeleton();
+      try {
+        const fresh = await createLandmarker();
+        if (generation !== clap.generation || !stream) { fresh.close(); return; }
+        const previous = landmarker;
+        landmarker = fresh;
+        previous.close();
+        legLength.L = legLength.R = 0;
+        state.L = state.R = null;
+        prevAnkle.L = prevAnkle.R = null;
+        stopClap();
+        beginSkeleton();
+      } catch (error) {
+        console.error("Could not refresh pose tracking.", error);
+        if (generation !== clap.generation) return;
+        stopClap();
+        skeleton.status = "clapFailed";
+        renderSkeleton();
+      }
+    }
+
+    async function armClap() {
+      if (!stream || video.paused || !landmarker || clap.phase !== "idle") return;
+      if (skeleton.frames.length && !window.confirm(t("skeletonReplace"))) return;
+      const generation = ++clap.generation;
+      clap.phase = "requesting";
+      skeleton.status = "clapRequest";
+      renderSkeleton();
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) throw new Error("Web Audio is unavailable");
+        const context = new AudioContext();
+        clap.context = context;
+        await context.resume();
+        if (generation !== clap.generation) return;
+        const microphone = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, video: false
+        });
+        if (generation !== clap.generation || !stream) {
+          microphone.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        clap.microphone = microphone;
+        microphone.getAudioTracks().forEach((track) => {
+          track.addEventListener("ended", () => {
+            if (generation !== clap.generation || clap.phase !== "listening") return;
+            console.error("Microphone stream ended unexpectedly.");
+            stopClap();
+            skeleton.status = "clapFailed";
+            renderSkeleton();
+          });
+        });
+        const analyser = context.createAnalyser();
+        analyser.fftSize = 1024;
+        context.createMediaStreamSource(microphone).connect(analyser);
+        const samples = new Float32Array(analyser.fftSize);
+        let baseline = 0.005, first = null, lastPeak = -Infinity, armed = true;
+        clap.phase = "listening";
+        skeleton.status = "clapWaiting";
+        renderSkeleton();
+        function listen(now) {
+          if (generation !== clap.generation || clap.phase !== "listening") return;
+          analyser.getFloatTimeDomainData(samples);
+          let sum = 0, peak = 0;
+          for (const sample of samples) { sum += sample * sample; peak = Math.max(peak, Math.abs(sample)); }
+          const rms = Math.sqrt(sum / samples.length);
+          if (first !== null && now - first > 1200) { first = null; skeleton.status = "clapWaiting"; renderSkeleton(); }
+          if (armed && rms > Math.max(0.035, baseline * 3) && peak > 0.12 && now - lastPeak >= 180) {
+            lastPeak = now;
+            armed = false;
+            if (first !== null && now - first >= 180 && now - first <= 1200) {
+              resetTrackingAndBegin(generation);
+              return;
+            }
+            first = now;
+            skeleton.status = "clapFirst";
+            renderSkeleton();
+          } else if (rms < Math.max(0.02, baseline * 2)) {
+            armed = true;
+            baseline = baseline * 0.98 + rms * 0.02;
+          }
+          clap.raf = requestAnimationFrame(listen);
+        }
+        clap.raf = requestAnimationFrame(listen);
+      } catch (error) {
+        console.error("Could not start clap detection.", error);
+        if (generation !== clap.generation) return;
+        stopClap();
+        skeleton.status = "clapFailed";
+        renderSkeleton();
+      }
+    }
 
     function renderSkeleton() {
       $("skeletonStatus").textContent = `${t(skeleton.status)} (${skeleton.frames.length})`;
-      $("skeletonStart").disabled = skeleton.recording || !landmarker || video.readyState < 2 || video.paused;
-      $("skeletonStop").disabled = !skeleton.recording;
-      $("skeletonExport").disabled = skeleton.recording || !skeleton.frames.length;
-      $("skeletonClear").disabled = skeleton.recording || !skeleton.frames.length;
+      const busy = skeleton.recording || clap.phase !== "idle";
+      $("skeletonStart").disabled = busy || !landmarker || video.readyState < 2 || video.paused;
+      $("clapStart").disabled = busy || !stream || !landmarker || video.readyState < 2 || video.paused;
+      $("skeletonStop").disabled = !busy;
+      $("skeletonExport").disabled = busy || !skeleton.frames.length;
+      $("skeletonClear").disabled = busy || !skeleton.frames.length;
     }
 
     function finishSkeleton(reason = "skeletonDone") {
@@ -418,6 +558,7 @@
     }
 
     function clearSkeleton() {
+      stopClap();
       skeleton.recording = false;
       skeleton.frames = [];
       skeleton.status = "skeletonIdle";
@@ -444,16 +585,15 @@
 
     document.addEventListener("languagechange", renderSkeleton);
     $("skeletonStart").addEventListener("click", () => {
-      if (!landmarker || video.readyState < 2 || video.paused) return;
+      if (!landmarker || video.readyState < 2 || video.paused || clap.phase !== "idle") return;
       if (skeleton.frames.length && !window.confirm(t("skeletonReplace"))) return;
-      skeleton.frames = [];
-      skeleton.start = stream ? performance.now() / 1000 : video.currentTime;
-      skeleton.last = skeleton.start;
-      skeleton.recording = true;
-      skeleton.status = "skeletonActive";
-      renderSkeleton();
+      beginSkeleton();
     });
-    $("skeletonStop").addEventListener("click", () => finishSkeleton());
+    $("clapStart").addEventListener("click", armClap);
+    $("skeletonStop").addEventListener("click", () => {
+      if (clap.phase !== "idle") { stopClap(); skeleton.status = "clapCancelled"; renderSkeleton(); }
+      else finishSkeleton();
+    });
     $("skeletonClear").addEventListener("click", clearSkeleton);
     $("skeletonExport").addEventListener("click", () => {
       if (!skeleton.frames.length || skeleton.recording) return;
@@ -484,11 +624,10 @@
     const deg = (rad) => rad * 180 / Math.PI;
     const fmt = (v, digits = 0, suffix = "") => Number.isFinite(v) ? v.toFixed(digits) + suffix : "—";
 
-    async function initModel() {
-      ({ PoseLandmarker, FilesetResolver, DrawingUtils } = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm"));
-      const fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    let visionFileset;
+    async function createLandmarker() {
       const modelAssetPath = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task";
-      const make = (delegate) => PoseLandmarker.createFromOptions(fileset, {
+      const make = (delegate) => PoseLandmarker.createFromOptions(visionFileset, {
         baseOptions: { modelAssetPath, delegate },
         runningMode: "VIDEO",
         numPoses: 1,
@@ -496,7 +635,16 @@
         minPosePresenceConfidence: 0.5,
         minTrackingConfidence: 0.5
       });
-      try { landmarker = await make("GPU"); } catch { landmarker = await make("CPU"); }
+      try { return await make("GPU"); } catch (error) {
+        console.warn("GPU pose model unavailable; trying CPU.", error);
+        return await make("CPU");
+      }
+    }
+
+    async function initModel() {
+      ({ PoseLandmarker, FilesetResolver, DrawingUtils } = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm"));
+      visionFileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+      landmarker = await createLandmarker();
       setStatus("ready");
       $("cam").disabled = false;
       renderSkeleton();
@@ -615,6 +763,10 @@
     }
 
     function stopStream() {
+      if (clap.phase !== "idle") {
+        stopClap();
+        skeleton.status = "clapCancelled";
+      }
       if (stream) finishSkeleton();
       if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; video.srcObject = null; }
       $("stop").disabled = true;
@@ -643,6 +795,13 @@
       try {
         stopStream(); resetAnalysis();
         stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720, frameRate: 60 }, audio: false });
+        const cameraStream = stream;
+        cameraStream.getVideoTracks().forEach((track) => track.addEventListener("ended", () => {
+          if (stream !== cameraStream) return;
+          console.error("Camera stream ended unexpectedly.");
+          stopStream();
+          setStatus("cameraError");
+        }));
         video.removeAttribute("src");
         video.srcObject = stream;
         await video.play();
@@ -654,6 +813,16 @@
       }
     });
     $("stop").addEventListener("click", () => { stopStream(); setStatus("cameraStopped"); });
+    function cancelClapOnHide() {
+      if (clap.phase === "idle") return;
+      stopClap();
+      skeleton.status = "clapCancelled";
+      renderSkeleton();
+    }
+    window.addEventListener("pagehide", cancelClapOnHide);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) cancelClapOnHide();
+    });
     $("reset").addEventListener("click", () => {
       if ((skeleton.recording || skeleton.frames.length) && !window.confirm(t("skeletonReplace"))) return;
       resetAnalysis();
