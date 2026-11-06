@@ -1,0 +1,26 @@
+name: KickItPositioning
+options:
+  bundleIdPrefix: com.kickit
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  KickItPositioning:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: KickIt Positioning
+        UILaunchScreen: {}
+        NSNearbyInteractionUsageDescription: Measure relative camera positions while setting up a KickIt recording.
+        NSLocalNetworkUsageDescription: Connect to the other cameras and exchange Nearby Interaction discovery tokens locally.
+        NSBonjourServices:
+          - _kickit-uwb._tcp
+          - _kickit-uwb._udp

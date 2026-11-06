@@ -6,6 +6,7 @@ Goal: record clean reference examples of each kick with 3 synchronized cameras, 
 
 ## 1. Setup (once)
 
+- Optional native [UWB positioning companion](./ios/CameraPositioning/README.md): on supported iPhones, measure relative distances while arranging the cameras. This experimental iOS app requires building/signing in Xcode; it cannot run in Safari and does not provide video timing synchronization or camera calibration. Switching to the web recorder stops UWB ranging.
 - Cameras: side, front, rear-45°. Same fps (1080p60), locked focus/exposure, fixed on stands. See sync notes: clap at the start and end of every take, say the take name aloud.
 - In [the camera analyzer](./pose.html), use **Show alignment grid and center point** (enabled by default) while positioning each camera. Place one visible marker at the shared recording point and aim all three center points at that same marker. Use the grid to level each view and leave room for the full body and movement path. Hide it with the checkbox when finished. The guide is preview-only, is not included in exported pose data, and does not synchronize cameras or perform multi-camera calibration.
 - Floor marker where the player starts, 1 m reference stick/tape visible to all cameras.
