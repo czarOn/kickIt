@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#10151d">
-    <title>TKD Training — trening dystansu</title>
+    <title>TKD Training — distance practice</title>
     <style>
       :root {
         color-scheme: dark;
@@ -281,6 +281,42 @@
       #replay-bar button { background: #2a3644; color: inherit; border: 1px solid #3b4a5c; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
       #replay-bar button.active { background: #e63946; border-color: #e63946; }
 
+      .lang-switch { display: inline-flex; gap: 4px; pointer-events: auto; }
+      .lang-switch button {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        width: auto;
+        margin: 0;
+        padding: 4px 8px;
+        border: 1px solid #ffffff30;
+        border-radius: 8px;
+        background: #10151dbd;
+        color: #eef3f8;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .lang-switch button:hover { background: #25313e; }
+      .lang-switch button[aria-pressed="true"] { border: 2px solid #50c878; background: #17402a; color: #b9ffd0; padding: 3px 7px; }
+      .lang-switch svg { width: 20px; height: 14px; border-radius: 2px; box-shadow: 0 0 0 1px #0006; }
+      .hud-lang { display: block; margin-top: 9px; }
+      .start-lang { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+      .start-lang .lang-switch button { background: #25313e; }
+      .lang-notice {
+        position: fixed;
+        z-index: 8;
+        top: 8px;
+        left: 50%;
+        max-width: min(560px, calc(100vw - 24px));
+        padding: 8px 12px;
+        border: 1px solid #ffcf70;
+        border-radius: 8px;
+        background: #3a2f12f2;
+        color: #ffe3a6;
+        font-size: 12px;
+        transform: translateX(-50%);
+      }
+
       @media (max-width: 600px) {
         .hud { padding: 12px; }
         .stats { gap: 6px; }
@@ -293,33 +329,34 @@
     </style>
   </head>
   <body>
-    <canvas id="renderCanvas" aria-label="Scena treningowa 3D"></canvas>
+    <canvas id="renderCanvas" data-i18n-aria-label="scene.aria" aria-label="3D training scene"></canvas>
 
     <header class="hud">
       <div>
-        <div class="brand">TKD TRAINING · PROTOTYP</div>
-        <div class="subtitle">Trening kombinacji · czytaj ruch partnera i dystans</div>
-        <button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="false">Dźwięk: wyłączony</button>
+        <div class="brand" data-i18n="brand">TKD TRAINING · PROTOTYPE</div>
+        <div class="subtitle" data-i18n="subtitle">Combo training · read your partner's movement and distance</div>
+        <button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="false" data-i18n="sound.off">Sound: off</button>
+        <div class="hud-lang"><div class="lang-switch" data-lang-switch></div></div>
       </div>
-      <div class="stats" aria-label="Wynik rundy">
-        <div class="stat"><strong id="score">0/5</strong><span>serie</span></div>
-        <div class="stat"><strong id="streak">0</strong><span>seria</span></div>
-        <div class="stat"><strong id="distance">6.4 m</strong><span>dystans</span></div>
-        <div class="stat"><strong id="guard-state">—</strong><span>garda</span></div>
-        <div class="stat"><strong id="stance-state">ZAMKNIĘTA</strong><span>postawa</span></div>
+      <div class="stats" data-i18n-aria-label="stats.aria" aria-label="Round score">
+        <div class="stat"><strong id="score">0/5</strong><span data-i18n="stat.sets">sets</span></div>
+        <div class="stat"><strong id="streak">0</strong><span data-i18n="stat.streak">streak</span></div>
+        <div class="stat"><strong id="distance">6.4 m</strong><span data-i18n="stat.distance">distance</span></div>
+        <div class="stat"><strong id="guard-state">—</strong><span data-i18n="stat.guard">guard</span></div>
+        <div class="stat"><strong id="stance-state" data-i18n="stance.closed">CLOSED</strong><span data-i18n="stat.stance">stance</span></div>
       </div>
     </header>
 
     <section class="lesson" aria-live="polite">
-      <h1 id="lesson-title">Obserwuj partnera</h1>
-      <p id="lesson-description">Partner się porusza — obserwuj go i sprawdzaj dystans przed każdym kopnięciem.</p>
-      <div id="cue">Zachowaj gotowość</div>
+      <h1 id="lesson-title" data-i18n="lesson.idle.title">Watch your partner</h1>
+      <p id="lesson-description" data-i18n="lesson.idle.desc">Your partner is moving — watch them and check the distance before every kick.</p>
+      <div id="cue" data-i18n="cue.ready">Stay ready</div>
       <div class="range-meter">
-        <div class="range-track" role="meter" aria-label="Umowny dystans w grze" aria-valuemin="0" aria-valuemax="7" aria-valuenow="6.4">
+        <div class="range-track" role="meter" data-i18n-aria-label="range.aria" aria-label="In-game relative distance" aria-valuemin="0" aria-valuemax="7" aria-valuenow="6.4">
           <div id="range-marker" class="range-marker"></div>
         </div>
-        <div class="range-labels"><span>bliżej</span><span>zakres ćwiczenia</span><span>dalej</span></div>
-        <div id="range-state">Poza zakresem — dostosuj dystans</div>
+        <div class="range-labels"><span data-i18n="range.closer">closer</span><span data-i18n="range.practice">practice range</span><span data-i18n="range.farther">farther</span></div>
+        <div id="range-state" data-i18n="range.out">Out of range — adjust distance</div>
         <div id="range-reference"></div>
       </div>
     </section>
@@ -329,72 +366,733 @@
         <div id="pad-hint" class="pad-controls"></div>
         <div id="key-hint"></div>
       </div>
-      <div id="view-mode" class="view-mode small">Widok zawodnika</div>
-      <div id="device" class="device small">Pad: oczekiwanie</div>
+      <div id="view-mode" class="view-mode small" data-i18n="view.fighter">Behind-the-fighter view · L3/V: switch</div>
+      <div id="device" class="device small" data-i18n="dev.waiting">Pad: waiting</div>
     </footer>
 
     <div id="start-screen" class="start-screen">
       <div class="start-card">
-        <h1>Wybierz kombinację</h1>
-        <p>Widok zza zawodnika. Obserwuj partnera, dobieraj nogę do kombinacji i używaj gardy, gdy zobaczysz jego atak.</p>
-        <div id="combo-picker" class="combo-picker" role="group" aria-label="Wybór kombinacji"></div>
+        <div class="start-lang"><div class="lang-switch" data-lang-switch></div></div>
+        <h1 id="start-title" data-i18n="start.title">Choose a combo</h1>
+        <p id="start-intro" data-i18n="start.intro">View from behind the fighter. Watch your partner, match the leg to the combo and use your guard when you see their attack.</p>
+        <div id="combo-picker" class="combo-picker" role="group" data-i18n-aria-label="combo.aria" aria-label="Combo selection"></div>
         <p id="combo-description" class="combo-description"></p>
         <div class="height-setting">
           <label class="height-heading" for="player-height">
-            <span>Twój wzrost</span>
+            <span data-i18n="height.label">Your height</span>
             <output id="player-height-value" for="player-height">170 cm</output>
           </label>
           <input id="player-height" type="range" min="120" max="210" step="1" value="170">
-          <p id="height-status" class="height-note">Wzrost nie jest wysyłany. Ustawienie zmienia tylko szacowany zasięg w grze.</p>
+          <p id="height-status" class="height-note" data-i18n="height.note">Height is not uploaded. This setting only changes your estimated in-game reach.</p>
         </div>
         <details class="profile-setting">
-          <summary>Gracz i układ przycisków</summary>
+          <summary data-i18n="profile.summary">Player and button layout</summary>
           <div class="profile-row">
-            <label for="profile-select">Gracz</label>
+            <label for="profile-select" data-i18n="profile.player">Player</label>
             <select id="profile-select"></select>
-            <button type="button" class="mini" id="profile-new">Nowy</button>
-            <button type="button" class="mini" id="profile-delete">Usuń</button>
+            <button type="button" class="mini" id="profile-new" data-i18n="profile.new">New</button>
+            <button type="button" class="mini" id="profile-delete" data-i18n="profile.delete">Delete</button>
           </div>
           <div class="profile-row">
-            <label for="preset-select">Układ</label>
+            <label for="preset-select" data-i18n="profile.layout">Layout</label>
             <select id="preset-select"></select>
           </div>
           <div id="binding-list" class="binding-list"></div>
-          <p id="binding-status" class="height-note">Kliknij akcję, potem naciśnij przycisk pada (możesz trzymać modyfikator) lub klawisz. Profile są zapisywane tylko w tej przeglądarce.</p>
+          <p id="binding-status" class="height-note" data-i18n="binding.hint">Click an action, then press a gamepad button (you may hold a modifier) or a key. Profiles are saved only in this browser.</p>
           <div class="profile-row">
-            <button type="button" class="mini" id="profiles-export">Eksport JSON</button>
-            <button type="button" class="mini" id="profiles-import-button">Import JSON</button>
+            <button type="button" class="mini" id="profiles-export" data-i18n="profiles.export">Export JSON</button>
+            <button type="button" class="mini" id="profiles-import-button" data-i18n="profiles.import">Import JSON</button>
             <input id="profiles-import" type="file" accept=".json,application/json" hidden>
           </div>
         </details>
-        <button class="sound-toggle" type="button" aria-pressed="false">Dźwięk: wyłączony</button>
-        <p class="small">DualSense w menu: krzyżak ←/→ wybiera kombinację, Options rozpoczyna rundę.</p>
+        <button class="sound-toggle" type="button" aria-pressed="false" data-i18n="sound.off">Sound: off</button>
+        <p class="small" data-i18n="menu.pad">DualSense in the menu: D-pad ←/→ selects a combo, Options starts the round.</p>
         <ul>
-          <li>Lewy drążek — poruszanie zawodnikiem</li>
+          <li data-i18n="list.move">Left stick — move the fighter</li>
           <li id="list-kicks"></li>
-          <li>L1 — przesuw (slide) w kierunku drążka; kopnięcie zaraz po przesuwie ma większy zasięg</li>
-          <li>R3 (klik prawego drążka) — zmiana postawy: po kopnięciu nogą zakroczną noga ląduje z przodu, a tułów obraca się na drugą stronę — jesteś odsłonięty, dopóki nie wrócisz R3</li>
+          <li data-i18n="list.slide">L1 — slide in the stick direction; a kick right after a slide has longer reach</li>
+          <li data-i18n="list.switch">R3 (click right stick) — stance switch: after a rear-leg kick the leg lands in front and the torso turns the other way — you are exposed until you press R3 again</li>
           <li id="list-guard"></li>
-          <li>Prawy drążek — obrót · kliknięcie L3 — widok zawodnika z tyłu</li>
+          <li data-i18n="list.right">Right stick — turn · L3 click — view from behind the fighter</li>
         </ul>
-        <p>Kamera śledzi zawodnika zza ramienia jak w grze walki. Kliknij L3, aby przełączyć widok pierwszoosobowy.</p>
-        <button id="start-button" type="button">Rozpocznij trening</button>
-        <label class="replay-load">Odtwórz własne nagranie (CSV z analizy kamery): <input id="replay-file" type="file" accept=".csv,text/csv"></label>
-        <p class="disclaimer">Tryb ćwiczy kolejność, rytm i reakcję; dźwięki są generowane w grze, a animacje nie oceniają techniki. Trenuj z trenerem, w bezpiecznych warunkach.</p>
+        <p data-i18n="camera.note">The camera follows the fighter over the shoulder like a fighting game. Click L3 to toggle first-person view.</p>
+        <button id="start-button" type="button" data-i18n="start.button">Start training</button>
+        <label class="replay-load"><span data-i18n="replay.load">Play your own recording (CSV from camera analysis):</span> <input id="replay-file" type="file" accept=".csv,text/csv"></label>
+        <p class="disclaimer" data-i18n="disclaimer">This mode practises order, rhythm and reaction; sounds are generated in the game, and animations do not assess technique. Train with a coach in safe conditions.</p>
       </div>
     </div>
-    <div id="replay-bar" class="hidden">
-      <span id="replay-title">Odtwarzanie nagrania</span>
+    <div id="replay-bar" class="hidden" role="group" data-i18n-aria-label="replay.aria" aria-label="Recording playback">
+      <span id="replay-title" data-i18n="replay.cue">Playing recording</span>
       <button type="button" data-speed="1">1×</button>
       <button type="button" data-speed="0.5">0.5×</button>
       <button type="button" data-speed="0.25">0.25×</button>
-      <button type="button" id="replay-exit">Wyjście (Esc)</button>
+      <button type="button" id="replay-exit" data-i18n="replay.exit">Exit (Esc)</button>
     </div>
 
+    <script>
+      (() => {
+        "use strict";
+
+        const LANGUAGE_KEY = "kickit-language";
+        const LANGUAGES = [
+          { code: "en", short: "EN", name: "English" },
+          { code: "pl", short: "PL", name: "Polski" },
+          { code: "ko", short: "KO", name: "한국어" }
+        ];
+        const FLAGS = {
+          en: '<svg viewBox="0 0 60 30" aria-hidden="true" focusable="false"><rect width="60" height="30" fill="#012169"/><path d="M0 0L60 30M60 0L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0L60 30M60 0L0 30" stroke="#c8102e" stroke-width="2"/><path d="M30 0V30M0 15H60" stroke="#fff" stroke-width="10"/><path d="M30 0V30M0 15H60" stroke="#c8102e" stroke-width="6"/></svg>',
+          pl: '<svg viewBox="0 0 60 36" aria-hidden="true" focusable="false"><rect width="60" height="18" fill="#fff"/><rect y="18" width="60" height="18" fill="#dc143c"/></svg>',
+          ko: '<svg viewBox="0 0 60 40" aria-hidden="true" focusable="false"><rect width="60" height="40" fill="#fff"/><path d="M20 20a10 10 0 0 1 20 0z" fill="#cd2e3a"/><path d="M20 20a10 10 0 0 0 20 0z" fill="#0047a0"/><circle cx="25" cy="20" r="5" fill="#cd2e3a"/><circle cx="35" cy="20" r="5" fill="#0047a0"/><g fill="#000"><rect x="5" y="5" width="10" height="2"/><rect x="5" y="9" width="10" height="2"/><rect x="5" y="13" width="10" height="2"/><rect x="45" y="25" width="10" height="2"/><rect x="45" y="29" width="10" height="2"/><rect x="45" y="33" width="10" height="2"/><rect x="45" y="5" width="10" height="2"/><rect x="5" y="25" width="10" height="2"/></g></svg>'
+        };
+
+        const DICT = {
+          en: {
+            "lang.label": "Language",
+            "lang.storageError": "Your language choice could not be saved (browser storage is unavailable). It will apply only until you reload this page.",
+            "lang.storageReadError": "Browser storage is unavailable, so the saved language could not be read. Using English.",
+            "doc.title": "TKD Training — distance practice",
+            "scene.aria": "3D training scene",
+            "brand": "TKD TRAINING · PROTOTYPE",
+            "subtitle": "Combo training · read your partner's movement and distance",
+            "stats.aria": "Round score",
+            "stat.sets": "sets",
+            "stat.streak": "streak",
+            "stat.distance": "distance",
+            "stat.guard": "guard",
+            "stat.stance": "stance",
+            "stance.closed": "CLOSED",
+            "stance.exposed": "EXPOSED",
+            "guard.active": "ACTIVE",
+            "lesson.idle.title": "Watch your partner",
+            "lesson.idle.desc": "Your partner is moving — watch them and check the distance before every kick.",
+            "cue.ready": "Stay ready",
+            "range.aria": "In-game relative distance",
+            "range.closer": "closer",
+            "range.practice": "practice range",
+            "range.farther": "farther",
+            "range.out": "Out of range — adjust distance",
+            "range.in": "Within practice range",
+            "range.far": "Too far — close the distance",
+            "range.near": "Too close — increase the distance",
+            "range.valuetext": "{d} m; practice range {min}–{max} m",
+            "range.reference": "{step}: reference point {ref} m ({source}); your range {min}–{max} m · relative game units",
+            "source.feedback": "from feedback",
+            "source.estimate": "estimate — needs checking",
+            "view.fighter": "Behind-the-fighter view · L3/V: switch",
+            "view.first": "First-person view · L3/V: switch",
+            "dev.waiting": "Pad: waiting",
+            "dev.waitingKeyboard": "Pad: waiting · keyboard active",
+            "dev.connected": "Pad: DualSense detected",
+            "start.title": "Choose a combo",
+            "start.intro": "View from behind the fighter. Watch your partner, match the leg to the combo and use your guard when you see their attack.",
+            "combo.aria": "Combo selection",
+            "height.label": "Your height",
+            "height.note": "Height is not uploaded. This setting only changes your estimated in-game reach.",
+            "height.error": "Could not read your height. Set the value again.",
+            "height.saved": "Height is saved only locally in the player profile and scales your estimated in-game reach.",
+            "height.saveFail": "Could not save the setting; height will only apply until this tab is closed.",
+            "profile.summary": "Player and button layout",
+            "profile.player": "Player",
+            "profile.new": "New",
+            "profile.delete": "Delete",
+            "profile.layout": "Layout",
+            "profile.default": "Player 1",
+            "profile.prompt": "Player name (new profile):",
+            "profile.confirmDelete": "Delete profile “{name}”?",
+            "binding.hint": "Click an action, then press a gamepad button (you may hold a modifier) or a key. Profiles are saved only in this browser.",
+            "binding.capture": "Press a gamepad button (hold a modifier, then the button) or a key. Esc cancels.",
+            "binding.capturing": "Press a button or key…",
+            "binding.cancelled": "Cancelled.",
+            "binding.saved": "Saved.",
+            "binding.saveFail": "Applied for this session only — browser storage is unavailable.",
+            "binding.clash": "This binding is already used: {other}. Choose another.",
+            "binding.reservedPad": "{btn} is reserved — choose another button.",
+            "binding.reservedKey": "This key is reserved (movement, slide, stance switch, view).",
+            "binding.presetSet": "Layout {name} applied.",
+            "binding.lastProfile": "The last profile cannot be deleted.",
+            "binding.imported": "Profiles imported: {n}.",
+            "binding.importFail": "Could not load the profile file.",
+            "bind.kickLead": "Lead-leg kick",
+            "bind.kickRear": "Rear-leg kick",
+            "bind.guard": "Guard",
+            "bind.slide": "Slide",
+            "bind.switch": "Stance switch",
+            "bind.slideFixed": "Slide (fixed)",
+            "bind.switchFixed": "Stance switch (fixed)",
+            "preset.A": "A · buttons (✕ □ ○)",
+            "preset.B": "B · triggers (R2 R1 L2)",
+            "preset.custom": "Custom",
+            "key.space": "Space",
+            "profiles.export": "Export JSON",
+            "profiles.import": "Import JSON",
+            "sound.off": "Sound: off",
+            "sound.on": "Sound: on · turn off",
+            "sound.error": "Could not turn on sound",
+            "menu.pad": "DualSense in the menu: D-pad ←/→ selects a combo, Options starts the round.",
+            "list.move": "Left stick — move the fighter",
+            "list.kicks": "{lead} — quick lead-leg kick · {rear} — stronger rear-leg kick",
+            "list.slide": "L1 — slide in the stick direction; a kick right after a slide has longer reach",
+            "list.switch": "R3 (click right stick) — stance switch: after a rear-leg kick the leg lands in front and the torso turns the other way — you are exposed until you press R3 again",
+            "list.guard": "{guard} — hold your guard during the partner's attack",
+            "list.right": "Right stick — turn · L3 click — view from behind the fighter",
+            "camera.note": "The camera follows the fighter over the shoulder like a fighting game. Click L3 to toggle first-person view.",
+            "start.button": "Start training",
+            "replay.load": "Play your own recording (CSV from camera analysis):",
+            "disclaimer": "This mode practises order, rhythm and reaction; sounds are generated in the game, and animations do not assess technique. Train with a coach in safe conditions.",
+            "finish.title": "Great job!",
+            "finish.intro": "You completed five sets: {combo}. Choose any sequence and try again.",
+            "finish.button": "Play again",
+            "replay.aria": "Recording playback",
+            "replay.exit": "Exit (Esc)",
+            "replay.title": "Recording: {name} · {s} s",
+            "replay.cue": "Playing recording",
+            "replay.error": "This does not look like a CSV file from camera analysis (kneeL/hipFlexL columns missing).",
+            "replay.readError": "Could not read the recording file.",
+            "hint.pad": "DualSense: LS move · RS turn · {lead} lead leg · {rear} rear leg · {guard} guard · L1 slide · R3 stance switch · L3 view",
+            "hint.key": "Keyboard: WASD move · {lead} lead leg · {rear} rear leg · {guard} guard · Space slide · E stance switch · V view",
+            "waiting.title": "Watch your partner · {combo}",
+            "waiting.desc": "Watch your partner. When they start kicking, hold {guard} to cover with your guard.",
+            "opening.title": "Your sequence · {combo}",
+            "opening.desc": "{lead} quick lead leg, {rear} slower rear leg (your stance changes after it), L1 slide, R3 return to stance.",
+            "cue.go": "GO IN · {prompt}",
+            "retreat.title": "Return to ready",
+            "retreat.desc": "After the full combo, step back or off the line and return to a ready position.",
+            "cue.retreat": "LEAVE THE RANGE",
+            "finished.title": "{combo} complete",
+            "finished.desc": "Good work. You can repeat this sequence or choose another.",
+            "finished.cue": "{n} of 5 sets completed",
+            "prompt.slide": "{name} · L1",
+            "prompt.switch": "{name} · R3",
+            "prompt.kick": "{name} · {btn}",
+            "cue.attack": "PARTNER KICKS — hold {guard} to cover with your guard!",
+            "atk.blocked": "Good guard — you blocked your partner's kick.",
+            "atk.hitExposed": "Hit! Exposed side after a rear-leg kick — return to your stance (R3).",
+            "atk.hit": "Hit! Next time hold {guard} during the attack.",
+            "timeout": "Combo time ran out — watch for the next signal.",
+            "seq.ok": "Sequence completed — good readiness!",
+            "seq.leave": "Remember to leave the range after kicking.",
+            "combo.done": "Combo performed — return to ready.",
+            "advance.step": "{result} Move {n} done — next: {prompt}",
+            "res.slide": "Slide!",
+            "res.stance": "Stance recovered!",
+            "res.slideKick": "Slide kick!",
+            "sw.exposed": "You switched stance — now return with R3 before you continue.",
+            "wait.signal": "Wait for your partner's signal.",
+            "need.slide": "Slide first (L1) toward your partner.",
+            "need.switch": "Return to your stance first (R3).",
+            "wrong.lead": "Use your lead leg ({btn}) for this move.",
+            "wrong.rear": "Use your rear leg ({btn}) for this move.",
+            "kick.far": "Too far ({d} m) — slide (L1) or kick with the second kick from a closer position: {step}.",
+            "kick.near": "Too close ({d} m) — step back and try again: {step}.",
+            "engine.error": "The 3D engine could not be loaded. Check your internet connection and reload the page.",
+            "n.roundLead": "Roundhouse kick, lead leg",
+            "n.sideLead": "Side kick, lead leg",
+            "n.spinBack": "Back-spinning kick",
+            "n.pushRear": "Push kick, rear leg",
+            "n.crescentSame": "Crescent kick, same leg (now in front)",
+            "n.tornado": "Tornado kick — 360° turn",
+            "n.hookLead": "Hook kick, lead leg",
+            "n.roundRear": "Roundhouse kick, rear leg",
+            "n.axeLead": "Axe kick, lead leg",
+            "n.frontLead": "Front kick, lead leg",
+            "n.slideFwd": "Slide forward (L1)",
+            "n.slide": "Slide (L1)",
+            "n.stanceReturn": "Return to stance (R3)",
+            "c1.title": "Combo 1",
+            "c1.desc": "Roundhouse to the body, side kick from the lead leg without long re-planting of the foot, then a back-spinning kick to the head or body.",
+            "c2.title": "Combo 2",
+            "c2.desc": "Push kick from the rear leg (the leg lands in front), crescent kick with the same leg — now the lead — then a tornado kick: 360° turn and a roundhouse to the body.",
+            "c3.title": "Combo 3",
+            "c3.desc": "Hook kick to the head, side kick to the body, rear-leg roundhouse to the head — a high–lower–high pattern.",
+            "c4.title": "Combo 4",
+            "c4.desc": "Axe kick to the head, rear-leg roundhouse to the body, then a back-spinning kick to the body or head.",
+            "c5.title": "Combo 5",
+            "c5.desc": "Front kick to the body, lead-leg roundhouse to the head, then a back-spinning kick to the body.",
+            "c6.title": "Combo 6 · 1 kick",
+            "c6.desc": "One slide and one kick: close the distance, then kick with the lead leg.",
+            "c7.title": "Combo 7 · 2 kicks",
+            "c7.desc": "You may miss the first kick — slide closer and land the second with the rear leg. After it your leg lands in front: you are exposed, so return with R3.",
+            "c8.title": "Combo 8 · two slides",
+            "c8.desc": "Two slides to close the distance step by step, then one side kick.",
+            "c9.title": "Combo 9 · slide, kick, slide, kick",
+            "c9.desc": "You alternate closing in and kicking: each kick changes your position relative to your partner.",
+            "c10.title": "Combo 10 · stance switch",
+            "c10.desc": "A rear-leg push kick moves that leg forward and leaves you exposed. Return to your R3 stance before kicking again."
+          },          pl: {
+            "lang.label": "Język",
+            "lang.storageError": "Nie udało się zapisać wyboru języka (pamięć przeglądarki jest niedostępna). Obowiązuje tylko do odświeżenia strony.",
+            "lang.storageReadError": "Pamięć przeglądarki jest niedostępna, więc nie można odczytać zapisanego języka. Używam angielskiego.",
+            "doc.title": "TKD Training — trening dystansu",
+            "scene.aria": "Scena treningowa 3D",
+            "brand": "TKD TRAINING · PROTOTYP",
+            "subtitle": "Trening kombinacji · czytaj ruch partnera i dystans",
+            "stats.aria": "Wynik rundy",
+            "stat.sets": "serie",
+            "stat.streak": "seria",
+            "stat.distance": "dystans",
+            "stat.guard": "garda",
+            "stat.stance": "postawa",
+            "stance.closed": "ZAMKNIĘTA",
+            "stance.exposed": "ODSŁONIĘTA",
+            "guard.active": "AKTYWNA",
+            "lesson.idle.title": "Obserwuj partnera",
+            "lesson.idle.desc": "Partner się porusza — obserwuj go i sprawdzaj dystans przed każdym kopnięciem.",
+            "cue.ready": "Zachowaj gotowość",
+            "range.aria": "Umowny dystans w grze",
+            "range.closer": "bliżej",
+            "range.practice": "zakres ćwiczenia",
+            "range.farther": "dalej",
+            "range.out": "Poza zakresem — dostosuj dystans",
+            "range.in": "W zakresie ćwiczenia",
+            "range.far": "Za daleko — skróć dystans",
+            "range.near": "Za blisko — zwiększ dystans",
+            "range.valuetext": "{d} m; zakres ćwiczenia {min}–{max} m",
+            "range.reference": "{step}: punkt odniesienia {ref} m ({source}); Twój zakres {min}–{max} m · umowne jednostki gry",
+            "source.feedback": "z feedbacku",
+            "source.estimate": "szacunek — do sprawdzenia",
+            "view.fighter": "Widok zza zawodnika · L3/V: zmień",
+            "view.first": "Widok 1. osoby · L3/V: zmień",
+            "dev.waiting": "Pad: oczekiwanie",
+            "dev.waitingKeyboard": "Pad: oczekiwanie · klawiatura aktywna",
+            "dev.connected": "Pad: DualSense wykryty",
+            "start.title": "Wybierz kombinację",
+            "start.intro": "Widok zza zawodnika. Obserwuj partnera, dobieraj nogę do kombinacji i używaj gardy, gdy zobaczysz jego atak.",
+            "combo.aria": "Wybór kombinacji",
+            "height.label": "Twój wzrost",
+            "height.note": "Wzrost nie jest wysyłany. Ustawienie zmienia tylko szacowany zasięg w grze.",
+            "height.error": "Nie udało się odczytać wzrostu. Ustaw wartość ponownie.",
+            "height.saved": "Wzrost jest zapisany tylko lokalnie w profilu gracza i skaluje szacowany zasięg w grze.",
+            "height.saveFail": "Nie udało się zapisać ustawienia; wzrost zadziała tylko do zamknięcia tej karty.",
+            "profile.summary": "Gracz i układ przycisków",
+            "profile.player": "Gracz",
+            "profile.new": "Nowy",
+            "profile.delete": "Usuń",
+            "profile.layout": "Układ",
+            "profile.default": "Gracz 1",
+            "profile.prompt": "Imię gracza (nowy profil):",
+            "profile.confirmDelete": "Usunąć profil „{name}”?",
+            "binding.hint": "Kliknij akcję, potem naciśnij przycisk pada (możesz trzymać modyfikator) lub klawisz. Profile są zapisywane tylko w tej przeglądarce.",
+            "binding.capture": "Naciśnij przycisk pada (trzymaj modyfikator, potem przycisk) lub klawisz. Esc anuluje.",
+            "binding.capturing": "Naciśnij przycisk lub klawisz…",
+            "binding.cancelled": "Anulowano.",
+            "binding.saved": "Zapisano.",
+            "binding.saveFail": "Zastosowano tylko na czas tej sesji — pamięć przeglądarki jest niedostępna.",
+            "binding.clash": "To przypisanie jest już użyte: {other}. Wybierz inne.",
+            "binding.reservedPad": "{btn} jest zarezerwowany — wybierz inny przycisk.",
+            "binding.reservedKey": "Ten klawisz jest zarezerwowany (ruch, przesuw, zmiana nogi, widok).",
+            "binding.presetSet": "Ustawiono układ {name}.",
+            "binding.lastProfile": "Nie można usunąć ostatniego profilu.",
+            "binding.imported": "Zaimportowano profile: {n}.",
+            "binding.importFail": "Nie udało się wczytać pliku profilu.",
+            "bind.kickLead": "Kopnięcie nogą wykroczną",
+            "bind.kickRear": "Kopnięcie nogą zakroczną",
+            "bind.guard": "Garda",
+            "bind.slide": "Przesuw",
+            "bind.switch": "Zmiana nogi",
+            "bind.slideFixed": "Przesuw (stały)",
+            "bind.switchFixed": "Zmiana nogi (stała)",
+            "preset.A": "A · przyciski (✕ □ ○)",
+            "preset.B": "B · spusty (R2 R1 L2)",
+            "preset.custom": "Własny",
+            "key.space": "Spacja",
+            "profiles.export": "Eksport JSON",
+            "profiles.import": "Import JSON",
+            "sound.off": "Dźwięk: wyłączony",
+            "sound.on": "Dźwięk: włączony · wyłącz",
+            "sound.error": "Nie udało się włączyć dźwięku",
+            "menu.pad": "DualSense w menu: krzyżak ←/→ wybiera kombinację, Options rozpoczyna rundę.",
+            "list.move": "Lewy drążek — poruszanie zawodnikiem",
+            "list.kicks": "{lead} — szybkie kopnięcie nogą wykroczną · {rear} — mocniejsze kopnięcie nogą zakroczną",
+            "list.slide": "L1 — przesuw (slide) w kierunku drążka; kopnięcie zaraz po przesuwie ma większy zasięg",
+            "list.switch": "R3 (klik prawego drążka) — zmiana postawy: po kopnięciu nogą zakroczną noga ląduje z przodu, a tułów obraca się na drugą stronę — jesteś odsłonięty, dopóki nie wrócisz R3",
+            "list.guard": "{guard} — trzymaj gardę podczas ataku partnera",
+            "list.right": "Prawy drążek — obrót · kliknięcie L3 — widok zawodnika z tyłu",
+            "camera.note": "Kamera śledzi zawodnika zza ramienia jak w grze walki. Kliknij L3, aby przełączyć widok pierwszoosobowy.",
+            "start.button": "Rozpocznij trening",
+            "replay.load": "Odtwórz własne nagranie (CSV z analizy kamery):",
+            "disclaimer": "Tryb ćwiczy kolejność, rytm i reakcję; dźwięki są generowane w grze, a animacje nie oceniają techniki. Trenuj z trenerem, w bezpiecznych warunkach.",
+            "finish.title": "Świetna robota!",
+            "finish.intro": "Ukończyłeś pięć serii: {combo}. Wybierz dowolną sekwencję i spróbuj ponownie.",
+            "finish.button": "Zagraj ponownie",
+            "replay.aria": "Odtwarzanie nagrania",
+            "replay.exit": "Wyjście (Esc)",
+            "replay.title": "Nagranie: {name} · {s} s",
+            "replay.cue": "Odtwarzanie nagrania",
+            "replay.error": "To nie wygląda na plik CSV z analizy kamery (brak kolumn kneeL/hipFlexL).",
+            "replay.readError": "Nie udało się odczytać pliku nagrania.",
+            "hint.pad": "DualSense: LS ruch · RS obrót · {lead} noga wykroczna · {rear} noga zakroczna · {guard} garda · L1 przesuw · R3 zmiana postawy · L3 widok",
+            "hint.key": "Klawiatura: WASD ruch · {lead} noga wykroczna · {rear} noga zakroczna · {guard} garda · Spacja przesuw · E zmiana postawy · V widok",
+            "waiting.title": "Obserwuj partnera · {combo}",
+            "waiting.desc": "Obserwuj partnera. Gdy zacznie kopać, trzymaj {guard}, aby zasłonić się gardą.",
+            "opening.title": "Twoja sekwencja · {combo}",
+            "opening.desc": "{lead} szybka noga wykroczna, {rear} wolniejsza zakroczna (po niej zmienia się postawa), L1 przesuw, R3 powrót w postawę.",
+            "cue.go": "WEJDŹ · {prompt}",
+            "retreat.title": "Wróć do gotowości",
+            "retreat.desc": "Po całej kombinacji odejdź lub zejdź z linii i wróć do gotowości.",
+            "cue.retreat": "WYJŚCIE Z DYSTANSU",
+            "finished.title": "{combo} ukończona",
+            "finished.desc": "Dobra praca. Możesz powtórzyć tę sekwencję albo wybrać inną.",
+            "finished.cue": "{n} z 5 serii ukończonych",
+            "prompt.slide": "{name} · L1",
+            "prompt.switch": "{name} · R3",
+            "prompt.kick": "{name} · {btn}",
+            "cue.attack": "PARTNER KOPIE — trzymaj {guard}, aby zasłonić się gardą!",
+            "atk.blocked": "Dobra garda — zablokowałeś kopnięcie partnera.",
+            "atk.hitExposed": "Trafienie! Odsłonięta strona po kopnięciu zakrocznym — wróć w postawę (R3).",
+            "atk.hit": "Trafienie! Następnym razem trzymaj {guard} podczas ataku.",
+            "timeout": "Czas na kombinację minął — obserwuj następny sygnał.",
+            "seq.ok": "Sekwencja zaliczona — dobra gotowość!",
+            "seq.leave": "Pamiętaj o wyjściu po kopnięciu.",
+            "combo.done": "Kombinacja wykonana — wróć do gotowości.",
+            "advance.step": "{result} Ruch {n} zaliczony — następny: {prompt}",
+            "res.slide": "Przesuw!",
+            "res.stance": "Postawa odzyskana!",
+            "res.slideKick": "Kopnięcie ze wślizgu!",
+            "sw.exposed": "Zmieniłeś postawę — teraz wróć R3, zanim ruszysz dalej.",
+            "wait.signal": "Poczekaj na sygnał partnera.",
+            "need.slide": "Najpierw przesuw (L1) w stronę partnera.",
+            "need.switch": "Najpierw wróć w postawę (R3).",
+            "wrong.lead": "Użyj nogi wykrocznej {btn} do tego ruchu.",
+            "wrong.rear": "Użyj nogi zakrocznej {btn} do tego ruchu.",
+            "kick.far": "Za daleko ({d} m) — przesuń się (L1) albo kop drugim kopnięciem z bliższej pozycji: {step}.",
+            "kick.near": "Za blisko ({d} m) — odsuń się i spróbuj ponownie: {step}.",
+            "engine.error": "Nie udało się wczytać silnika 3D. Sprawdź połączenie z internetem i odśwież stronę.",
+            "n.roundLead": "Okrężne z nogi wykrocznej",
+            "n.sideLead": "Boczne z nogi wykrocznej",
+            "n.spinBack": "Obrotowe w tył",
+            "n.pushRear": "Pchające z nogi zakrocznej",
+            "n.crescentSame": "Półksiężycowe tą samą nogą (teraz z przodu)",
+            "n.tornado": "Tornado — obrót 360°",
+            "n.hookLead": "Hakowe z nogi wykrocznej",
+            "n.roundRear": "Okrężne z nogi zakrocznej",
+            "n.axeLead": "Opadające (axe) z nogi wykrocznej",
+            "n.frontLead": "Proste z nogi wykrocznej",
+            "n.slideFwd": "Przesuw do przodu (L1)",
+            "n.slide": "Przesuw (L1)",
+            "n.stanceReturn": "Powrót do postawy (R3)",
+            "c1.title": "Kombinacja 1",
+            "c1.desc": "Okrężne na tułów, boczne z nogi wykrocznej bez długiego odkładania stopy, potem obrotowe w tył na głowę lub tułów.",
+            "c2.title": "Kombinacja 2",
+            "c2.desc": "Pchające z nogi zakrocznej (noga ląduje z przodu), półksiężycowe tą samą nogą — teraz wykroczną, następnie tornado — obrót 360° i kopnięcie okrężne na tułów.",
+            "c3.title": "Kombinacja 3",
+            "c3.desc": "Hakowe na głowę, boczne na tułów, okrężne z nogi zakrocznej na głowę — układ wysoki–niższy–wysoki.",
+            "c4.title": "Kombinacja 4",
+            "c4.desc": "Opadające na głowę, okrężne z nogi zakrocznej na tułów, następnie obrotowe w tył na tułów lub głowę.",
+            "c5.title": "Kombinacja 5",
+            "c5.desc": "Proste na tułów, okrężne z nogi wykrocznej na głowę, następnie obrotowe w tył na tułów.",
+            "c6.title": "Kombinacja 6 · 1 kopnięcie",
+            "c6.desc": "Jeden przesuw i jedno kopnięcie: skróć dystans, potem kop nogą wykroczną.",
+            "c7.title": "Kombinacja 7 · 2 kopnięcia",
+            "c7.desc": "Pierwsze kopnięcie możesz chybić — przesuń się bliżej i trafij drugim z nogi zakrocznej. Po nim noga ląduje z przodu: jesteś odsłonięty, wróć R3.",
+            "c8.title": "Kombinacja 8 · dwa przesuwy",
+            "c8.desc": "Dwa przesuwy, by zmniejszyć dystans krok po kroku, potem jedno kopnięcie boczne.",
+            "c9.title": "Kombinacja 9 · przesuw, kopnięcie, przesuw, kopnięcie",
+            "c9.desc": "Naprzemiennie dochodzisz i kopiesz: każde kopnięcie zmienia Twoją pozycję względem partnera.",
+            "c10.title": "Kombinacja 10 · zmiana postawy",
+            "c10.desc": "Pchające nogą zakroczną przenosi ją do przodu i odsłania Cię. Wróć w postawę R3, zanim kopniesz dalej."
+          },          ko: {
+            "lang.label": "언어",
+            "lang.storageError": "언어 선택을 저장하지 못했습니다(브라우저 저장소를 사용할 수 없음). 페이지를 새로고침하기 전까지만 적용됩니다.",
+            "lang.storageReadError": "브라우저 저장소를 사용할 수 없어 저장된 언어를 읽지 못했습니다. 영어를 사용합니다.",
+            "doc.title": "TKD 트레이닝 — 거리 감각 훈련",
+            "scene.aria": "3D 훈련 장면",
+            "brand": "TKD 트레이닝 · 프로토타입",
+            "subtitle": "콤비네이션 훈련 · 파트너의 움직임과 거리를 읽으세요",
+            "stats.aria": "라운드 점수",
+            "stat.sets": "세트",
+            "stat.streak": "연속",
+            "stat.distance": "거리",
+            "stat.guard": "가드",
+            "stat.stance": "자세",
+            "stance.closed": "닫힘",
+            "stance.exposed": "노출",
+            "guard.active": "활성",
+            "lesson.idle.title": "파트너를 관찰하세요",
+            "lesson.idle.desc": "파트너가 움직입니다 — 관찰하고 매번 차기 전에 거리를 확인하세요.",
+            "cue.ready": "준비 자세 유지",
+            "range.aria": "게임 내 상대 거리",
+            "range.closer": "가까이",
+            "range.practice": "연습 범위",
+            "range.farther": "멀리",
+            "range.out": "범위 밖 — 거리를 조정하세요",
+            "range.in": "연습 범위 안",
+            "range.far": "너무 멉니다 — 거리를 좁히세요",
+            "range.near": "너무 가깝습니다 — 거리를 벌리세요",
+            "range.valuetext": "{d} m; 연습 범위 {min}–{max} m",
+            "range.reference": "{step}: 기준 거리 {ref} m ({source}); 내 범위 {min}–{max} m · 게임 내 상대 단위",
+            "source.feedback": "피드백 기준",
+            "source.estimate": "추정치 — 확인 필요",
+            "view.fighter": "선수 뒤 시점 · L3/V: 전환",
+            "view.first": "1인칭 시점 · L3/V: 전환",
+            "dev.waiting": "게임패드: 대기 중",
+            "dev.waitingKeyboard": "게임패드: 대기 중 · 키보드 사용 가능",
+            "dev.connected": "게임패드: DualSense 감지됨",
+            "start.title": "콤비네이션 선택",
+            "start.intro": "선수 뒤에서 보는 시점입니다. 파트너를 관찰하고, 콤비네이션에 맞는 발을 고르고, 파트너의 공격이 보이면 가드를 사용하세요.",
+            "combo.aria": "콤비네이션 선택",
+            "height.label": "내 키",
+            "height.note": "키는 전송되지 않습니다. 이 설정은 게임 내 예상 리치만 바꿉니다.",
+            "height.error": "키 값을 읽을 수 없습니다. 값을 다시 설정하세요.",
+            "height.saved": "키는 선수 프로필에 이 기기에만 저장되며 게임 내 예상 리치를 조정합니다.",
+            "height.saveFail": "설정을 저장하지 못했습니다. 키 설정은 이 탭을 닫을 때까지만 적용됩니다.",
+            "profile.summary": "선수 및 버튼 배치",
+            "profile.player": "선수",
+            "profile.new": "새로 만들기",
+            "profile.delete": "삭제",
+            "profile.layout": "배치",
+            "profile.default": "선수 1",
+            "profile.prompt": "선수 이름 (새 프로필):",
+            "profile.confirmDelete": "프로필 “{name}”을(를) 삭제할까요?",
+            "binding.hint": "동작을 클릭한 뒤 게임패드 버튼(보조 버튼을 누른 채로 가능) 또는 키보드 키를 누르세요. 프로필은 이 브라우저에만 저장됩니다.",
+            "binding.capture": "게임패드 버튼(보조 버튼을 누른 상태에서 버튼) 또는 키를 누르세요. Esc로 취소합니다.",
+            "binding.capturing": "버튼 또는 키를 누르세요…",
+            "binding.cancelled": "취소되었습니다.",
+            "binding.saved": "저장되었습니다.",
+            "binding.saveFail": "이번 세션에만 적용됩니다 — 브라우저 저장소를 사용할 수 없습니다.",
+            "binding.clash": "이미 사용 중인 설정입니다: {other}. 다른 것을 선택하세요.",
+            "binding.reservedPad": "{btn} 버튼은 예약되어 있습니다 — 다른 버튼을 선택하세요.",
+            "binding.reservedKey": "이 키는 예약되어 있습니다 (이동, 슬라이드, 자세 전환, 시점).",
+            "binding.presetSet": "{name} 배치를 적용했습니다.",
+            "binding.lastProfile": "마지막 프로필은 삭제할 수 없습니다.",
+            "binding.imported": "가져온 프로필: {n}개.",
+            "binding.importFail": "프로필 파일을 불러오지 못했습니다.",
+            "bind.kickLead": "앞발 차기",
+            "bind.kickRear": "뒷발 차기",
+            "bind.guard": "가드",
+            "bind.slide": "슬라이드",
+            "bind.switch": "자세 전환",
+            "bind.slideFixed": "슬라이드 (고정)",
+            "bind.switchFixed": "자세 전환 (고정)",
+            "preset.A": "A · 버튼 (✕ □ ○)",
+            "preset.B": "B · 트리거 (R2 R1 L2)",
+            "preset.custom": "사용자 지정",
+            "key.space": "스페이스",
+            "profiles.export": "JSON 내보내기",
+            "profiles.import": "JSON 가져오기",
+            "sound.off": "소리: 꺼짐",
+            "sound.on": "소리: 켜짐 · 끄기",
+            "sound.error": "소리를 켤 수 없습니다",
+            "menu.pad": "메뉴에서 DualSense: 십자키 ←/→로 콤비네이션 선택, Options로 라운드 시작.",
+            "list.move": "왼쪽 스틱 — 선수 이동",
+            "list.kicks": "{lead} — 빠른 앞발 차기 · {rear} — 더 강한 뒷발 차기",
+            "list.slide": "L1 — 스틱 방향으로 슬라이드; 슬라이드 직후에 차면 도달 거리가 늘어납니다",
+            "list.switch": "R3(오른쪽 스틱 클릭) — 자세 전환: 뒷발 차기 후 발이 앞에 착지하고 몸통이 반대쪽으로 돌아가 R3를 다시 누르기 전까지 노출됩니다",
+            "list.guard": "{guard} — 파트너가 공격할 때 가드 유지",
+            "list.right": "오른쪽 스틱 — 회전 · L3 클릭 — 선수 뒤 시점",
+            "camera.note": "카메라는 격투 게임처럼 선수의 어깨 뒤를 따라갑니다. L3를 누르면 1인칭 시점으로 전환됩니다.",
+            "start.button": "훈련 시작",
+            "replay.load": "내 녹화 파일 재생 (카메라 분석 CSV):",
+            "disclaimer": "이 모드는 순서, 리듬, 반응을 연습합니다. 효과음은 게임에서 생성되며 애니메이션은 기술을 평가하지 않습니다. 안전한 환경에서 지도자와 함께 훈련하세요.",
+            "finish.title": "훌륭합니다!",
+            "finish.intro": "다섯 세트를 완료했습니다: {combo}. 원하는 시퀀스를 골라 다시 도전하세요.",
+            "finish.button": "다시 하기",
+            "replay.aria": "녹화 재생",
+            "replay.exit": "나가기 (Esc)",
+            "replay.title": "녹화: {name} · {s}초",
+            "replay.cue": "녹화 재생 중",
+            "replay.error": "카메라 분석 CSV 파일이 아닌 것 같습니다 (kneeL/hipFlexL 열이 없음).",
+            "replay.readError": "녹화 파일을 읽을 수 없습니다.",
+            "hint.pad": "DualSense: LS 이동 · RS 회전 · {lead} 앞발 · {rear} 뒷발 · {guard} 가드 · L1 슬라이드 · R3 자세 전환 · L3 시점",
+            "hint.key": "키보드: WASD 이동 · {lead} 앞발 · {rear} 뒷발 · {guard} 가드 · 스페이스 슬라이드 · E 자세 전환 · V 시점",
+            "waiting.title": "파트너 관찰 · {combo}",
+            "waiting.desc": "파트너를 관찰하세요. 파트너가 차기 시작하면 가드({guard})를 눌러 막으세요.",
+            "opening.title": "내 시퀀스 · {combo}",
+            "opening.desc": "{lead} 빠른 앞발, {rear} 느린 뒷발(차고 나면 자세가 바뀜), L1 슬라이드, R3 자세 복귀.",
+            "cue.go": "진입 · {prompt}",
+            "retreat.title": "준비 자세로 복귀",
+            "retreat.desc": "콤비네이션이 끝나면 물러나거나 라인에서 벗어나 준비 자세로 돌아가세요.",
+            "cue.retreat": "거리 벗어나기",
+            "finished.title": "{combo} 완료",
+            "finished.desc": "수고했습니다. 이 시퀀스를 반복하거나 다른 시퀀스를 선택하세요.",
+            "finished.cue": "5세트 중 {n}세트 완료",
+            "prompt.slide": "{name} · L1",
+            "prompt.switch": "{name} · R3",
+            "prompt.kick": "{name} · {btn}",
+            "cue.attack": "파트너가 찹니다 — 가드({guard})를 눌러 막으세요!",
+            "atk.blocked": "좋은 가드 — 파트너의 킥을 막았습니다.",
+            "atk.hitExposed": "피격! 뒷발 차기 후 노출된 쪽입니다 — 자세로 돌아가세요 (R3).",
+            "atk.hit": "피격! 다음에는 공격 중에 가드({guard})를 누르세요.",
+            "timeout": "콤비네이션 시간이 지났습니다 — 다음 신호를 관찰하세요.",
+            "seq.ok": "시퀀스 완료 — 좋은 준비 자세!",
+            "seq.leave": "차고 나면 거리를 벗어나는 것을 잊지 마세요.",
+            "combo.done": "콤비네이션 완료 — 준비 자세로 돌아가세요.",
+            "advance.step": "{result} {n}번째 동작 완료 — 다음: {prompt}",
+            "res.slide": "슬라이드!",
+            "res.stance": "자세 회복!",
+            "res.slideKick": "슬라이드 킥!",
+            "sw.exposed": "자세를 전환했습니다 — 계속하기 전에 R3로 돌아가세요.",
+            "wait.signal": "파트너의 신호를 기다리세요.",
+            "need.slide": "먼저 파트너 쪽으로 슬라이드하세요 (L1).",
+            "need.switch": "먼저 자세로 돌아가세요 (R3).",
+            "wrong.lead": "이 동작에는 앞발({btn})을 사용하세요.",
+            "wrong.rear": "이 동작에는 뒷발({btn})을 사용하세요.",
+            "kick.far": "너무 멉니다 ({d} m) — 슬라이드(L1)하거나 더 가까운 위치에서 두 번째 킥을 차세요: {step}.",
+            "kick.near": "너무 가깝습니다 ({d} m) — 물러난 뒤 다시 시도하세요: {step}.",
+            "engine.error": "3D 엔진을 불러오지 못했습니다. 인터넷 연결을 확인하고 페이지를 새로고침하세요.",
+            "n.roundLead": "앞발 돌려차기",
+            "n.sideLead": "앞발 옆차기",
+            "n.spinBack": "뒤돌려차기",
+            "n.pushRear": "뒷발 밀어차기",
+            "n.crescentSame": "같은 발 반달차기 (이제 앞발)",
+            "n.tornado": "토네이도 차기 — 360° 회전",
+            "n.hookLead": "앞발 후려차기",
+            "n.roundRear": "뒷발 돌려차기",
+            "n.axeLead": "앞발 내려차기",
+            "n.frontLead": "앞발 앞차기",
+            "n.slideFwd": "앞으로 슬라이드 (L1)",
+            "n.slide": "슬라이드 (L1)",
+            "n.stanceReturn": "자세 복귀 (R3)",
+            "c1.title": "콤비네이션 1",
+            "c1.desc": "몸통 돌려차기, 발을 오래 내려놓지 않고 앞발 옆차기, 이어서 머리나 몸통으로 뒤돌려차기.",
+            "c2.title": "콤비네이션 2",
+            "c2.desc": "뒷발 밀어차기(발이 앞에 착지), 같은 발 반달차기(이제 앞발), 이어서 토네이도 차기: 360° 회전 후 몸통 돌려차기.",
+            "c3.title": "콤비네이션 3",
+            "c3.desc": "머리 후려차기, 몸통 옆차기, 뒷발 머리 돌려차기 — 높게–낮게–높게 패턴.",
+            "c4.title": "콤비네이션 4",
+            "c4.desc": "머리 내려차기, 뒷발 몸통 돌려차기, 이어서 몸통 또는 머리로 뒤돌려차기.",
+            "c5.title": "콤비네이션 5",
+            "c5.desc": "몸통 앞차기, 앞발 머리 돌려차기, 이어서 몸통으로 뒤돌려차기.",
+            "c6.title": "콤비네이션 6 · 킥 1회",
+            "c6.desc": "슬라이드 한 번과 킥 한 번: 거리를 좁힌 뒤 앞발로 차세요.",
+            "c7.title": "콤비네이션 7 · 킥 2회",
+            "c7.desc": "첫 킥은 빗나가도 됩니다 — 가까이 슬라이드해서 뒷발로 두 번째 킥을 맞히세요. 차고 나면 발이 앞에 착지해 노출되므로 R3로 돌아오세요.",
+            "c8.title": "콤비네이션 8 · 슬라이드 2회",
+            "c8.desc": "슬라이드 두 번으로 거리를 단계적으로 좁힌 뒤 옆차기 한 번.",
+            "c9.title": "콤비네이션 9 · 슬라이드, 킥, 슬라이드, 킥",
+            "c9.desc": "다가가기와 차기를 번갈아 합니다. 킥마다 파트너에 대한 내 위치가 바뀝니다.",
+            "c10.title": "콤비네이션 10 · 자세 전환",
+            "c10.desc": "뒷발 밀어차기는 그 발을 앞으로 옮겨 몸을 노출시킵니다. 다시 차기 전에 R3로 자세를 되돌리세요."
+          }
+        };
+
+        const codes = LANGUAGES.map((entry) => entry.code);
+        let current = "en";
+        const listeners = [];
+        let noticeKey = null;
+        let noticeElement = null;
+        let storageReadFailed = false;
+
+        function showNotice(key) {
+          noticeKey = key;
+          if (!noticeElement) {
+            noticeElement = document.createElement("div");
+            noticeElement.className = "lang-notice";
+            noticeElement.setAttribute("role", "alert");
+            noticeElement.addEventListener("click", () => { noticeKey = null; noticeElement.hidden = true; });
+            document.body.append(noticeElement);
+          }
+          noticeElement.hidden = false;
+          noticeElement.textContent = t(key);
+        }
+
+        function readStoredLanguage() {
+          try {
+            const value = window.localStorage.getItem(LANGUAGE_KEY);
+            return codes.includes(value) ? value : null;
+          } catch (error) {
+            console.error("Could not read the saved language.", error);
+            storageReadFailed = true;
+            return null;
+          }
+        }
+
+        function format(template, params) {
+          return template.replace(/\{(\w+)\}/g, (match, name) => {
+            if (!params || !(name in params)) return match;
+            const value = typeof params[name] === "function" ? params[name]() : params[name];
+            return value === undefined || value === null ? "" : String(value);
+          });
+        }
+
+        function t(key, params) {
+          const template = (DICT[current] && DICT[current][key]) ?? DICT.en[key];
+          return template === undefined ? key : format(template, params);
+        }
+
+        const msg = (key, params) => ({ key, params });
+        const text = (message) => message && typeof message === "object" ? t(message.key, message.params) : (message ?? "");
+
+        function applyStatic() {
+          document.documentElement.lang = current;
+          document.title = t("doc.title");
+          if (noticeKey) showNotice(noticeKey);
+          document.querySelectorAll("[data-i18n]").forEach((element) => { element.textContent = t(element.dataset.i18n); });
+          document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => { element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel)); });
+          document.querySelectorAll("[data-lang-switch]").forEach((container) => {
+            container.setAttribute("role", "group");
+            container.setAttribute("aria-label", t("lang.label"));
+            container.querySelectorAll("button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.lang === current)));
+          });
+        }
+
+        function buildSwitches() {
+          document.querySelectorAll("[data-lang-switch]").forEach((container) => {
+            for (const entry of LANGUAGES) {
+              const button = document.createElement("button");
+              button.type = "button";
+              button.dataset.lang = entry.code;
+              button.lang = entry.code;
+              button.title = entry.name;
+              button.setAttribute("aria-label", entry.name);
+              button.innerHTML = `${FLAGS[entry.code]}<span aria-hidden="true">${entry.short}</span>`;
+              button.addEventListener("click", () => setLanguage(entry.code, true));
+              container.append(button);
+            }
+          });
+        }
+
+        function setLanguage(code, persist) {
+          if (!codes.includes(code)) return;
+          current = code;
+          if (persist) {
+            try {
+              window.localStorage.setItem(LANGUAGE_KEY, code);
+            } catch (error) {
+              console.error("Could not save the language choice.", error);
+              noticeKey = "lang.storageError";
+            }
+          }
+          applyStatic();
+          for (const listener of listeners) {
+            try {
+              listener(current);
+            } catch (error) {
+              console.error("Language listener failed.", error);
+            }
+          }
+        }
+
+        window.addEventListener("storage", (event) => {
+          if (event.key === LANGUAGE_KEY && codes.includes(event.newValue) && event.newValue !== current) setLanguage(event.newValue, false);
+        });
+
+        window.KickitI18n = {
+          t,
+          msg,
+          text,
+          get lang() { return current; },
+          setLanguage: (code) => setLanguage(code, true),
+          onChange: (listener) => { listeners.push(listener); }
+        };
+
+        buildSwitches();
+        current = readStoredLanguage() || "en";
+        if (storageReadFailed) noticeKey = "lang.storageReadError";
+        applyStatic();
+      })();
+    </script>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script>
       (() => {
         "use strict";
+
+        if (typeof BABYLON === "undefined") {
+          const i18n = window.KickitI18n;
+          const showEngineError = () => { document.querySelector("#cue").textContent = i18n.t("engine.error"); };
+          showEngineError();
+          i18n.onChange(showEngineError);
+          return;
+        }
 
         const canvas = document.querySelector("#renderCanvas");
         const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: false, stencil: true });
@@ -621,103 +1319,28 @@
         const avatarGloveLeft = playerAvatar.getChildMeshes().find((mesh) => mesh.name.includes("glove-left"));
         const avatarGloveRight = playerAvatar.getChildMeshes().find((mesh) => mesh.name.includes("glove-right"));
         const opponentStartZ = 3.25;
+        const { t, msg, text } = window.KickitI18n;
+        const kickStep = (name, leg, referenceDistance, source) => ({ name, leg, referenceDistance, source });
+        const slideStep = (name) => ({ type: "slide", name });
         const combos = [
-          {
-            title: "Kombinacja 1",
-            steps: [
-              { name: "Okrężne z nogi wykrocznej", leg: "front", referenceDistance: 1.4, source: "feedback" },
-              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.6, source: "feedback" },
-              { name: "Obrotowe w tył", leg: "back", referenceDistance: 1.8, source: "estimate" }
-            ],
-            description: "Okrężne na tułów, boczne z nogi wykrocznej bez długiego odkładania stopy, potem obrotowe w tył na głowę lub tułów."
-          },
-          {
-            title: "Kombinacja 2",
-            steps: [
-              { name: "Pchające z nogi zakrocznej", leg: "back", referenceDistance: 1.8, source: "feedback" },
-              { name: "Półksiężycowe tą samą nogą (teraz z przodu)", leg: "front", referenceDistance: 1.4, source: "estimate" },
-              { name: "Tornado — obrót 360°", leg: "back", referenceDistance: 2.2, source: "feedback" }
-            ],
-            description: "Pchające z nogi zakrocznej (noga ląduje z przodu), półksiężycowe tą samą nogą — teraz wykroczną, następnie tornado — obrót 360° i kopnięcie okrężne na tułów."
-          },
-          {
-            title: "Kombinacja 3",
-            steps: [
-              { name: "Hakowe z nogi wykrocznej", leg: "front", referenceDistance: 1.3, source: "feedback" },
-              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.5, source: "feedback" },
-              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.7, source: "feedback" }
-            ],
-            description: "Hakowe na głowę, boczne na tułów, okrężne z nogi zakrocznej na głowę — układ wysoki–niższy–wysoki."
-          },
-          {
-            title: "Kombinacja 4",
-            steps: [
-              { name: "Opadające (axe) z nogi wykrocznej", leg: "front", referenceDistance: 1.2, source: "feedback" },
-              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.6, source: "feedback" },
-              { name: "Obrotowe w tył", leg: "back", referenceDistance: 1.8, source: "feedback" }
-            ],
-            description: "Opadające na głowę, okrężne z nogi zakrocznej na tułów, następnie obrotowe w tył na tułów lub głowę."
-          },
-          {
-            title: "Kombinacja 5",
-            steps: [
-              { name: "Proste z nogi wykrocznej", leg: "front", referenceDistance: 1.7, source: "feedback" },
-              { name: "Okrężne z nogi wykrocznej", leg: "front", referenceDistance: 1.5, source: "estimate" },
-              { name: "Obrotowe w tył", leg: "back", referenceDistance: 1.9, source: "feedback" }
-            ],
-            description: "Proste na tułów, okrężne z nogi wykrocznej na głowę, następnie obrotowe w tył na tułów."
-          },
-          {
-            title: "Kombinacja 6 · 1 kopnięcie",
-            steps: [
-              { type: "slide", name: "Przesuw do przodu (L1)" },
-              { name: "Proste z nogi wykrocznej", leg: "front", referenceDistance: 1.7, source: "estimate" }
-            ],
-            description: "Jeden przesuw i jedno kopnięcie: skróć dystans, potem kop nogą wykroczną."
-          },
-          {
-            title: "Kombinacja 7 · 2 kopnięcia",
-            steps: [
-              { name: "Okrężne z nogi wykrocznej", leg: "front", referenceDistance: 1.5, source: "estimate" },
-              { type: "slide", name: "Przesuw do przodu (L1)" },
-              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.5, source: "estimate" }
-            ],
-            description: "Pierwsze kopnięcie możesz chybić — przesuń się bliżej i trafij drugim z nogi zakrocznej. Po nim noga ląduje z przodu: jesteś odsłonięty, wróć R3."
-          },
-          {
-            title: "Kombinacja 8 · dwa przesuwy",
-            steps: [
-              { type: "slide", name: "Przesuw (L1)" },
-              { type: "slide", name: "Przesuw (L1)" },
-              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.6, source: "feedback" }
-            ],
-            description: "Dwa przesuwy, by zmniejszyć dystans krok po kroku, potem jedno kopnięcie boczne."
-          },
-          {
-            title: "Kombinacja 9 · przesuw, kopnięcie, przesuw, kopnięcie",
-            steps: [
-              { type: "slide", name: "Przesuw (L1)" },
-              { name: "Proste z nogi wykrocznej", leg: "front", referenceDistance: 1.7, source: "estimate" },
-              { type: "slide", name: "Przesuw (L1)" },
-              { name: "Okrężne z nogi zakrocznej", leg: "back", referenceDistance: 1.5, source: "estimate" }
-            ],
-            description: "Naprzemiennie dochodzisz i kopiesz: każde kopnięcie zmienia Twoją pozycję względem partnera."
-          },
-          {
-            title: "Kombinacja 10 · zmiana postawy",
-            steps: [
-              { name: "Pchające z nogi zakrocznej", leg: "back", referenceDistance: 1.8, source: "feedback" },
-              { type: "switch", name: "Powrót do postawy (R3)" },
-              { name: "Boczne z nogi wykrocznej", leg: "front", referenceDistance: 1.6, source: "feedback" }
-            ],
-            description: "Pchające nogą zakroczną przenosi ją do przodu i odsłania Cię. Wróć w postawę R3, zanim kopniesz dalej."
-          }
+          { id: 1, steps: [kickStep("n.roundLead", "front", 1.4, "feedback"), kickStep("n.sideLead", "front", 1.6, "feedback"), kickStep("n.spinBack", "back", 1.8, "estimate")] },
+          { id: 2, steps: [kickStep("n.pushRear", "back", 1.8, "feedback"), kickStep("n.crescentSame", "front", 1.4, "estimate"), kickStep("n.tornado", "back", 2.2, "feedback")] },
+          { id: 3, steps: [kickStep("n.hookLead", "front", 1.3, "feedback"), kickStep("n.sideLead", "front", 1.5, "feedback"), kickStep("n.roundRear", "back", 1.7, "feedback")] },
+          { id: 4, steps: [kickStep("n.axeLead", "front", 1.2, "feedback"), kickStep("n.roundRear", "back", 1.6, "feedback"), kickStep("n.spinBack", "back", 1.8, "feedback")] },
+          { id: 5, steps: [kickStep("n.frontLead", "front", 1.7, "feedback"), kickStep("n.roundLead", "front", 1.5, "estimate"), kickStep("n.spinBack", "back", 1.9, "feedback")] },
+          { id: 6, steps: [slideStep("n.slideFwd"), kickStep("n.frontLead", "front", 1.7, "estimate")] },
+          { id: 7, steps: [kickStep("n.roundLead", "front", 1.5, "estimate"), slideStep("n.slideFwd"), kickStep("n.roundRear", "back", 1.5, "estimate")] },
+          { id: 8, steps: [slideStep("n.slide"), slideStep("n.slide"), kickStep("n.sideLead", "front", 1.6, "feedback")] },
+          { id: 9, steps: [slideStep("n.slide"), kickStep("n.frontLead", "front", 1.7, "estimate"), slideStep("n.slide"), kickStep("n.roundRear", "back", 1.5, "estimate")] },
+          { id: 10, steps: [kickStep("n.pushRear", "back", 1.8, "feedback"), { type: "switch", name: "n.stanceReturn" }, kickStep("n.sideLead", "front", 1.6, "feedback")] }
         ];
+        const comboTitle = (combo) => t(`c${combo.id}.title`);
+        const comboDescription = (combo) => t(`c${combo.id}.desc`);
+        const stepName = (step) => t(step.name);
 
-        const stepPrompt = (step) => step.type === "slide" ? `${step.name} · L1`
-          : step.type === "switch" ?           `${step.name} · R3`
-                    : `${step.name} · ${padLabel(step.leg === "front" ? "kickLead" : "kickRear")}`;
-
+        const stepPrompt = (step) => step.type === "slide" ? t("prompt.slide", { name: stepName(step) })
+          : step.type === "switch" ? t("prompt.switch", { name: stepName(step) })
+          : t("prompt.kick", { name: stepName(step), btn: padLabel(step.leg === "front" ? "kickLead" : "kickRear") });
         const startScreen = document.querySelector("#start-screen");
         const scoreLabel = document.querySelector("#score");
         const streakLabel = document.querySelector("#streak");
@@ -733,7 +1356,7 @@
         const cueLabel = document.querySelector("#cue");
         const deviceLabel = document.querySelector("#device");
         const comboPicker = document.querySelector("#combo-picker");
-        const comboDescription = document.querySelector("#combo-description");
+        const comboDescriptionLabel = document.querySelector("#combo-description");
         const heightInput = document.querySelector("#player-height");
         const heightValue = document.querySelector("#player-height-value");
         const heightStatus = document.querySelector("#height-status");
@@ -747,9 +1370,9 @@
         const RESERVED_PAD = new Set([4, 9, 10, 11, 14, 15]);
         const RESERVED_KEYS = new Set(["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "e", "v", "escape"]);
         const BINDABLE = [
-          { id: "kickLead", label: "Kopnięcie nogą wykroczną" },
-          { id: "kickRear", label: "Kopnięcie nogą zakroczną" },
-          { id: "guard", label: "Garda" }
+          { id: "kickLead", label: "bind.kickLead" },
+          { id: "kickRear", label: "bind.kickRear" },
+          { id: "guard", label: "bind.guard" }
         ];
         const LOCKED = {
           slide: { pad: { b: 4, m: [] }, keys: [" "] },
@@ -757,7 +1380,7 @@
         };
         const PRESETS = {
           A: {
-            name: "A · przyciski (✕ □ ○)",
+            name: "preset.A",
             bindings: {
               kickLead: { pad: { b: 0, m: [] }, keys: ["j", "enter"] },
               kickRear: { pad: { b: 2, m: [] }, keys: ["l"] },
@@ -765,7 +1388,7 @@
             }
           },
           B: {
-            name: "B · spusty (R2 R1 L2)",
+            name: "preset.B",
             bindings: {
               kickLead: { pad: { b: 7, m: [] }, keys: ["j", "enter"] },
               kickRear: { pad: { b: 5, m: [] }, keys: ["l"] },
@@ -828,7 +1451,7 @@
           } catch (error) {
             console.error("Could not load saved player height.", error);
           }
-          return { active: "Gracz 1", profiles: { "Gracz 1": sanitizeProfile({ heightCm: legacyHeight }) }, log: [] };
+          return { active: "Player 1", profiles: { "Player 1": sanitizeProfile({ heightCm: legacyHeight }) }, log: [] };
         }
 
         const store = loadStore();
@@ -847,7 +1470,7 @@
 
         function presetNameOf(bindings) {
           const json = JSON.stringify(bindings);
-          return Object.keys(PRESETS).find((key) => JSON.stringify(PRESETS[key].bindings) === json) || "własny";
+          return Object.keys(PRESETS).find((key) => JSON.stringify(PRESETS[key].bindings) === json) || "custom";
         }
 
         const activeBindings = () => ({ ...activeProfile().bindings, ...LOCKED });
@@ -860,7 +1483,7 @@
 
         function keyLabel(id) {
           const binding = activeBindings()[id];
-          const keyName = (key) => key === " " ? "Spacja" : key.length === 1 ? key.toUpperCase() : key[0].toUpperCase() + key.slice(1);
+          const keyName = (key) => key === " " ? t("key.space") : key.length === 1 ? key.toUpperCase() : key[0].toUpperCase() + key.slice(1);
           return binding && binding.keys.length ? binding.keys.map(keyName).join("/") : "—";
         }
 
@@ -935,15 +1558,53 @@
         let opponentAttackImpactAt = Infinity;
         let opponentAttackStart = 0;
         let opponentAttackUntil = 0;
-        let opponentAttackFeedback = "";
+        let opponentAttackFeedback = null;
+        let opponentAttackHit = false;
         let opponentAttackFeedbackUntil = 0;
         let activeGamepadIndex = null;
         let lastFrame = performance.now();
 
+        let cueMessage = msg("cue.ready");
+        let cueMood = "";
         function setCue(message, mood = "") {
-          cueLabel.textContent = message;
+          cueMessage = message;
+          cueMood = mood;
+          cueLabel.textContent = text(message);
           cueLabel.className = mood;
         }
+
+        let lessonTitleMsg = msg("lesson.idle.title");
+        let lessonDescMsg = msg("lesson.idle.desc");
+        function setLesson(title, description) {
+          lessonTitleMsg = title;
+          lessonDescMsg = description;
+          titleLabel.textContent = text(title);
+          descriptionLabel.textContent = text(description);
+        }
+
+        let soundState = "off";
+        function setSoundState(state) {
+          soundState = state;
+          soundToggles.forEach((toggle) => {
+            toggle.textContent = t(`sound.${state}`);
+            toggle.setAttribute("aria-pressed", String(state === "on"));
+          });
+        }
+
+        let finishedComboIndex = null;
+        function renderStart() {
+          if (finishedComboIndex === null) return;
+          document.querySelector("#start-title").textContent = t("finish.title");
+          document.querySelector("#start-intro").textContent = t("finish.intro", { combo: comboTitle(combos[finishedComboIndex]) });
+          document.querySelector("#start-button").textContent = t("finish.button");
+        }
+
+        let heightStatusMsg = msg("height.note");
+        function setHeightStatus(message) {
+          heightStatusMsg = message;
+          heightStatus.textContent = text(message);
+        }
+        const profileLabel = (name) => /^(Gracz|Player|선수) 1$/.test(name) ? t("profile.default") : name;
 
         function createNoiseBuffer() {
           const buffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
@@ -1104,10 +1765,7 @@
             soundEnabled = false;
             window.clearInterval(musicTimer);
             musicTimer = null;
-            soundToggles.forEach((toggle) => {
-              toggle.textContent = "Dźwięk: wyłączony";
-              toggle.setAttribute("aria-pressed", "false");
-            });
+            setSoundState("off");
             if (masterGain && audioContext.state === "running") {
               masterGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.035);
               window.setTimeout(() => {
@@ -1128,22 +1786,30 @@
             }
             noiseBuffer = noiseBuffer || createNoiseBuffer();
             soundEnabled = true;
-            soundToggles.forEach((toggle) => {
-              toggle.textContent = "Dźwięk: włączony · wyłącz";
-              toggle.setAttribute("aria-pressed", "true");
-            });
+            setSoundState("on");
             startMusicScheduler();
           } catch (error) {
             console.error("Could not start training audio.", error);
             soundEnabled = false;
-            soundToggles.forEach((toggle) => {
-              toggle.textContent = "Nie udało się włączyć dźwięku";
-              toggle.setAttribute("aria-pressed", "false");
-            });
+            setSoundState("error");
           }
         }
 
         soundToggles.forEach((toggle) => toggle.addEventListener("click", toggleSound));
+
+        function renderComboLabels() {
+          comboPicker.querySelectorAll("button").forEach((button, index) => button.setAttribute("aria-label", comboTitle(combos[index])));
+        }
+
+        function renderComboDescription() {
+          const combo = combos[selectedComboIndex];
+          const heading = document.createElement("strong");
+          heading.textContent = `${comboTitle(combo)}:`;
+          const steps = document.createElement("span");
+          steps.className = "muted";
+          steps.textContent = combo.steps.map(stepName).join(" → ");
+          comboDescriptionLabel.replaceChildren(heading, ` ${comboDescription(combo)}`, document.createElement("br"), document.createElement("br"), steps);
+        }
 
         function selectCombo(index) {
           selectedComboIndex = (index + combos.length) % combos.length;
@@ -1151,7 +1817,7 @@
           comboPicker.querySelectorAll("button").forEach((button, buttonIndex) => {
             button.setAttribute("aria-pressed", String(buttonIndex === selectedComboIndex));
           });
-          comboDescription.innerHTML = `<strong>${combo.title}:</strong> ${combo.description}<br><br><span class="muted">${combo.steps.map((step) => step.name).join(" → ")}</span>`;
+          renderComboDescription();
           updateRangeDescription();
         }
 
@@ -1160,7 +1826,7 @@
           button.className = "combo-option";
           button.type = "button";
           button.textContent = String(index + 1);
-          button.setAttribute("aria-label", combo.title);
+          button.setAttribute("aria-label", comboTitle(combo));
           button.setAttribute("aria-pressed", "false");
           button.addEventListener("click", () => selectCombo(index));
           comboPicker.append(button);
@@ -1194,14 +1860,19 @@
           const range = getPersonalizedRange(step);
           rangeTrack.style.setProperty("--range-min", `${BABYLON.Scalar.Clamp(range.min / 7, 0, 1) * 100}%`);
           rangeTrack.style.setProperty("--range-max", `${BABYLON.Scalar.Clamp(range.max / 7, 0, 1) * 100}%`);
-          const source = step.source === "feedback" ? "z feedbacku" : "szacunek — do sprawdzenia";
-          rangeReference.textContent = `${step.name}: punkt odniesienia ${step.referenceDistance.toFixed(1)} m (${source}); Twój zakres ${range.min.toFixed(1)}–${range.max.toFixed(1)} m · umowne jednostki gry`;
+          rangeReference.textContent = t("range.reference", {
+            step: stepName(step),
+            ref: step.referenceDistance.toFixed(1),
+            source: t(step.source === "feedback" ? "source.feedback" : "source.estimate"),
+            min: range.min.toFixed(1),
+            max: range.max.toFixed(1)
+          });
         }
 
         function applyPlayerHeight(save = false) {
           const parsedHeight = Number(heightInput.value);
           if (!Number.isFinite(parsedHeight)) {
-            heightStatus.textContent = "Nie udało się odczytać wzrostu. Ustaw wartość ponownie.";
+            setHeightStatus(msg("height.error"));
             return;
           }
           playerHeightCm = BABYLON.Scalar.Clamp(parsedHeight, 120, 210);
@@ -1212,9 +1883,9 @@
           if (save) {
             activeProfile().heightCm = playerHeightCm;
             if (saveStore()) {
-              heightStatus.textContent = "Wzrost jest zapisany tylko lokalnie w profilu gracza i skaluje szacowany zasięg w grze.";
+              setHeightStatus(msg("height.saved"));
             } else {
-              heightStatus.textContent = "Nie udało się zapisać ustawienia; wzrost zadziała tylko do zamknięcia tej karty.";
+              setHeightStatus(msg("height.saveFail"));
             }
           }
         }
@@ -1233,41 +1904,41 @@
         const describeBinding = (id) => `${padLabel(id)} · ${keyLabel(id)}`;
 
         function refreshHints() {
-          document.querySelector("#pad-hint").textContent = `DualSense: LS ruch · RS obrót · ${padLabel("kickLead")} noga wykroczna · ${padLabel("kickRear")} noga zakroczna · ${padLabel("guard")} garda · L1 przesuw · R3 zmiana postawy · L3 widok`;
-          document.querySelector("#key-hint").textContent = `Klawiatura: WASD ruch · ${keyLabel("kickLead")} noga wykroczna · ${keyLabel("kickRear")} noga zakroczna · ${keyLabel("guard")} garda · Spacja przesuw · E zmiana postawy · V widok`;
-          document.querySelector("#list-kicks").textContent = `${padLabel("kickLead")} — szybkie kopnięcie nogą wykroczną · ${padLabel("kickRear")} — mocniejsze kopnięcie nogą zakroczną`;
-          document.querySelector("#list-guard").textContent = `${padLabel("guard")} — trzymaj gardę podczas ataku partnera`;
+          document.querySelector("#pad-hint").textContent = t("hint.pad", { lead: padLabel("kickLead"), rear: padLabel("kickRear"), guard: padLabel("guard") });
+          document.querySelector("#key-hint").textContent = t("hint.key", { lead: keyLabel("kickLead"), rear: keyLabel("kickRear"), guard: keyLabel("guard") });
+          document.querySelector("#list-kicks").textContent = t("list.kicks", { lead: padLabel("kickLead"), rear: padLabel("kickRear") });
+          document.querySelector("#list-guard").textContent = t("list.guard", { guard: padLabel("guard") });
         }
 
         function renderProfileUi() {
           profileSelect.replaceChildren(...Object.keys(store.profiles).map((name) => {
             const option = document.createElement("option");
             option.value = name;
-            option.textContent = name;
+            option.textContent = profileLabel(name);
             return option;
           }));
           profileSelect.value = store.active;
           const current = presetNameOf(activeProfile().bindings);
-          presetSelect.replaceChildren(...[...Object.keys(PRESETS).map((key) => [key, PRESETS[key].name]), ["własny", "Własny"]].map(([value, text]) => {
+          presetSelect.replaceChildren(...[...Object.keys(PRESETS).map((key) => [key, t(PRESETS[key].name)]), ["custom", t("preset.custom")]].map(([value, text]) => {
             const option = document.createElement("option");
             option.value = value;
             option.textContent = text;
-            option.disabled = value === "własny" && current !== "własny";
+            option.disabled = value === "custom" && current !== "custom";
             return option;
           }));
           presetSelect.value = current;
           const rows = BINDABLE.map(({ id, label }) => {
             const name = document.createElement("span");
-            name.textContent = label;
+            name.textContent = t(label);
             const button = document.createElement("button");
             button.type = "button";
             button.dataset.action = id;
             const capturing = capture && capture.id === id;
             button.classList.toggle("capturing", Boolean(capturing));
-            button.textContent = capturing ? "Naciśnij przycisk lub klawisz…" : describeBinding(id);
+            button.textContent = capturing ? t("binding.capturing") : describeBinding(id);
             return [name, button];
           });
-          const locked = [["Przesuw (stały)", describeBinding("slide")], ["Zmiana nogi (stała)", describeBinding("switch")]].map(([text, value]) => {
+          const locked = [[t("bind.slideFixed"), describeBinding("slide")], [t("bind.switchFixed"), describeBinding("switch")]].map(([text, value]) => {
             const name = document.createElement("span");
             name.textContent = text;
             const note = document.createElement("span");
@@ -1280,8 +1951,10 @@
           updateRangeDescription();
         }
 
-        function setBindingStatus(text) {
-          bindingStatus.textContent = text;
+        let bindingStatusMsg = msg("binding.hint");
+        function setBindingStatus(message) {
+          bindingStatusMsg = message;
+          bindingStatus.textContent = text(message);
         }
 
         function applyBinding(id, patch) {
@@ -1292,14 +1965,13 @@
             const clash = (patch.pad && bindings[other].pad && JSON.stringify([...bindings[other].pad.m, bindings[other].pad.b].sort()) === JSON.stringify([...patch.pad.m, patch.pad.b].sort()))
               || (patch.keys && patch.keys.some((key) => bindings[other].keys.includes(key)));
             if (clash) {
-              const otherLabel = (BINDABLE.find((item) => item.id === other) || { label: other === "slide" ? "Przesuw" : "Zmiana nogi" }).label;
-              setBindingStatus(`To przypisanie jest już użyte: ${otherLabel}. Wybierz inne.`);
+              const otherLabel = () => t((BINDABLE.find((item) => item.id === other) || { label: other === "slide" ? "bind.slide" : "bind.switch" }).label);
+              setBindingStatus(msg("binding.clash", { other: otherLabel }));
               return false;
             }
           }
           activeProfile().bindings[id] = { pad: candidate.pad, keys: candidate.keys };
-          saveStore();
-          setBindingStatus("Zapisano.");
+          setBindingStatus(msg(saveStore() ? "binding.saved" : "binding.saveFail"));
           return true;
         }
 
@@ -1315,7 +1987,7 @@
             if (!button.pressed) return;
             anyDown = true;
             if (RESERVED_PAD.has(index)) {
-              setBindingStatus(`${PAD_NAMES[index]} jest zarezerwowany — wybierz inny przycisk.`);
+              setBindingStatus(msg("binding.reservedPad", { btn: PAD_NAMES[index] }));
             } else if (!capture.order.includes(index)) {
               capture.order.push(index);
             }
@@ -1331,12 +2003,12 @@
           event.preventDefault();
           const key = event.key.toLowerCase();
           if (key === "escape") {
-            setBindingStatus("Anulowano.");
+            setBindingStatus(msg("binding.cancelled"));
             finishCapture();
             return;
           }
           if (RESERVED_KEYS.has(key)) {
-            setBindingStatus("Ten klawisz jest zarezerwowany (ruch, przesuw, zmiana nogi, widok).");
+            setBindingStatus(msg("binding.reservedKey"));
             return;
           }
           const base = activeProfile().bindings[capture.id];
@@ -1358,7 +2030,7 @@
           const id = event.target.dataset && event.target.dataset.action;
           if (!id) return;
           capture = capture && capture.id === id ? null : { id, order: [] };
-          setBindingStatus(capture ? "Naciśnij przycisk pada (trzymaj modyfikator, potem przycisk) lub klawisz. Esc anuluje." : "Anulowano.");
+          setBindingStatus(msg(capture ? "binding.capture" : "binding.cancelled"));
           renderProfileUi();
         });
         presetSelect.addEventListener("change", () => {
@@ -1366,12 +2038,13 @@
           activeProfile().bindings = cloneBindings(PRESETS[presetSelect.value].bindings);
           saveStore();
           capture = null;
-          setBindingStatus(`Ustawiono układ ${PRESETS[presetSelect.value].name}.`);
+          const presetKey = PRESETS[presetSelect.value].name;
+          setBindingStatus(msg("binding.presetSet", { name: () => t(presetKey) }));
           renderProfileUi();
         });
         profileSelect.addEventListener("change", () => switchProfile(profileSelect.value));
         document.querySelector("#profile-new").addEventListener("click", () => {
-          const name = (window.prompt("Imię gracza (nowy profil):") || "").trim().slice(0, 24);
+          const name = (window.prompt(t("profile.prompt")) || "").trim().slice(0, 24);
           if (!name || FORBIDDEN_NAMES.has(name)) return;
           if (!store.profiles[name]) store.profiles[name] = sanitizeProfile({ heightCm: playerHeightCm, bindings: activeProfile().bindings });
           switchProfile(name);
@@ -1379,10 +2052,10 @@
         document.querySelector("#profile-delete").addEventListener("click", () => {
           const names = Object.keys(store.profiles);
           if (names.length < 2) {
-            setBindingStatus("Nie można usunąć ostatniego profilu.");
+            setBindingStatus(msg("binding.lastProfile"));
             return;
           }
-          if (!window.confirm(`Usunąć profil „${store.active}”?`)) return;
+          if (!window.confirm(t("profile.confirmDelete", { name: profileLabel(store.active) }))) return;
           delete store.profiles[store.active];
           switchProfile(Object.keys(store.profiles)[0]);
         });
@@ -1401,7 +2074,7 @@
           if (!file) return;
           try {
             const data = JSON.parse(await file.text());
-            if (!data || typeof data.profiles !== "object" || !data.profiles) throw new Error("brak profili");
+            if (!data || typeof data.profiles !== "object" || !data.profiles) throw new Error("missing profiles");
             let imported = 0;
             for (const name of Object.keys(data.profiles)) {
               if (FORBIDDEN_NAMES.has(name)) continue;
@@ -1412,44 +2085,42 @@
             }
             if (Array.isArray(data.log)) store.log = store.log.concat(data.log.slice(-300)).slice(-300);
             saveStore();
-            setBindingStatus(`Zaimportowano profile: ${imported}.`);
+            setBindingStatus(msg("binding.imported", { n: imported }));
             renderProfileUi();
           } catch (error) {
             console.error("Profile import failed.", error);
-            setBindingStatus("Nie udało się wczytać pliku profilu.");
+            setBindingStatus(msg("binding.importFail"));
           }
         });
         renderProfileUi();
+
+        const goCue = (step) => msg("cue.go", { prompt: () => stepPrompt(step) });
 
         function setPhase(next, now) {
           phase = next;
           if (next === "waiting") {
             nextCue = now + 2500 + Math.random() * 1800;
             nextOpponentAttackAt = now + 900 + Math.random() * 700;
-            titleLabel.textContent = `Obserwuj partnera · ${combos[selectedComboIndex].title}`;
-            descriptionLabel.textContent = "Obserwuj partnera. Gdy zacznie kopnąć, trzymaj " + padLabel("guard") + ", aby zasłonić się gardą.";
-            setCue("Zachowaj gotowość");
+            setLesson(msg("waiting.title", { combo: () => comboTitle(combos[selectedComboIndex]) }), msg("waiting.desc", { guard: () => padLabel("guard") }));
+            setCue(msg("cue.ready"));
           } else if (next === "opening") {
             phaseEnds = now + 15000;
             comboStep = 0;
             nextOpponentAttackAt = Infinity;
             updateRangeDescription();
-            titleLabel.textContent = `Twoja sekwencja · ${combos[selectedComboIndex].title}`;
-            descriptionLabel.textContent = `${padLabel("kickLead")} szybka noga wykroczna, ${padLabel("kickRear")} wolniejsza zakroczna (po niej zmienia się postawa), L1 przesuw, R3 powrót w postawę.`;
-            setCue(`WEJDŹ · ${stepPrompt(combos[selectedComboIndex].steps[comboStep])}`, "warning");
+            setLesson(msg("opening.title", { combo: () => comboTitle(combos[selectedComboIndex]) }), msg("opening.desc", { lead: () => padLabel("kickLead"), rear: () => padLabel("kickRear") }));
+            setCue(goCue(combos[selectedComboIndex].steps[comboStep]), "warning");
           } else if (next === "retreat") {
             phaseEnds = now + 3500;
-            titleLabel.textContent = "Wróć do gotowości";
-            descriptionLabel.textContent = "Po całej kombinacji odejdź lub zejdź z linii i wróć do gotowości.";
-            setCue("WYJŚCIE Z DYSTANSU", "warning");
+            setLesson(msg("retreat.title"), msg("retreat.desc"));
+            setCue(msg("cue.retreat"), "warning");
           } else if (next === "finished") {
             running = false;
-            titleLabel.textContent = `${combos[selectedComboIndex].title} ukończona`;
-            descriptionLabel.textContent = "Dobra praca. Możesz powtórzyć tę sekwencję albo wybrać inną.";
-            setCue(`${reps} z 5 serii ukończonych`);
-            startScreen.querySelector("h1").textContent = "Świetna robota!";
-            startScreen.querySelector(":scope > .start-card > p").textContent = `Ukończyłeś pięć serii: ${combos[selectedComboIndex].title}. Wybierz dowolną sekwencję i spróbuj ponownie.`;
-            document.querySelector("#start-button").textContent = "Zagraj ponownie";
+            const finishedIndex = selectedComboIndex;
+            setLesson(msg("finished.title", { combo: () => comboTitle(combos[finishedIndex]) }), msg("finished.desc"));
+            setCue(msg("finished.cue", { n: reps }));
+            finishedComboIndex = finishedIndex;
+            renderStart();
             startScreen.classList.remove("hidden");
           }
         }
@@ -1470,7 +2141,7 @@
           streak = 0;
           comboStep = 0;
           feedback = "";
-          currentRound = { at: new Date().toISOString(), player: store.active, layout: presetNameOf(activeProfile().bindings), combo: combos[selectedComboIndex].title, reps: 0, bestStreak: 0 };
+          currentRound = { at: new Date().toISOString(), player: store.active, layout: presetNameOf(activeProfile().bindings), combo: `Combo ${combos[selectedComboIndex].id}`, reps: 0, bestStreak: 0 };
           store.log.push(currentRound);
           if (store.log.length > 300) store.log.splice(0, store.log.length - 300);
           saveStore();
@@ -1487,7 +2158,8 @@
           opponent.position.set(0, 0, 3.25);
           opponentAttackUntil = 0;
           opponentAttackImpactAt = Infinity;
-          opponentAttackFeedback = "";
+          opponentAttackFeedback = null;
+          opponentAttackHit = false;
           opponentAttackFeedbackUntil = 0;
           nextOpponentAttackAt = Infinity;
           setPhase("waiting", performance.now());
@@ -1519,12 +2191,26 @@
           return count ? sum / count : NaN;
         });
 
-        function loadReplay(text, name) {
-          const lines = text.trim().split(/\r?\n/);
+        function renderReplayTitle() {
+          if (replay) document.querySelector("#replay-title").textContent = t("replay.title", { name: replay.name, s: replay.duration.toFixed(0) });
+        }
+
+        function loadReplay(csvText, name) {
+          try {
+            loadReplayUnsafe(csvText, name);
+          } catch (error) {
+            console.error("Could not load the recording.", error);
+            replay = null;
+            alert(t("replay.readError"));
+          }
+        }
+
+        function loadReplayUnsafe(csvText, name) {
+          const lines = csvText.trim().split(/\r?\n/);
           const cols = lines[0].split(",");
           const idx = Object.fromEntries(cols.map((c, i) => [c, i]));
           if (!["t", "kneeL", "kneeR", "hipFlexL", "hipFlexR"].every((c) => c in idx)) {
-            alert("To nie wygląda na plik CSV z analizy kamery (brak kolumn kneeL/hipFlexL).");
+            alert(t("replay.error"));
             return;
           }
           const rows = lines.slice(1).map((line) => line.split(",").map(Number));
@@ -1539,7 +2225,7 @@
             start: performance.now()
           };
           replay.duration = replay.t[replay.t.length - 1];
-          document.querySelector("#replay-title").textContent = `Nagranie: ${name} · ${replay.duration.toFixed(0)} s`;
+          renderReplayTitle();
           setReplaySpeed(0.5);
           startScreen.classList.add("hidden");
           replayBar.classList.remove("hidden");
@@ -1551,7 +2237,7 @@
           playerPosition.set(0, 0, -3.1);
           playerYaw = 0;
           firstPerson = false;
-          setCue("Odtwarzanie nagrania", "");
+          setCue(msg("replay.cue"), "");
         }
 
         function setReplaySpeed(speed) {
@@ -1626,14 +2312,15 @@
         function advanceCombo(now, resultText) {
           comboStep += 1;
           if (comboStep >= combos[selectedComboIndex].steps.length) {
-            feedback = "Kombinacja wykonana — wróć do gotowości.";
+            feedback = msg("combo.done");
             feedbackUntil = now + 1100;
             setPhase("retreat", now);
             setCue(feedback, "");
           } else {
             phaseEnds = now + 5000;
             const nextStep = combos[selectedComboIndex].steps[comboStep];
-            feedback = `${resultText} Ruch ${comboStep} zaliczony — następny: ${stepPrompt(nextStep)}`;
+            const doneCount = comboStep;
+            feedback = msg("advance.step", { result: resultText ? () => t(resultText) : "", n: doneCount, prompt: () => stepPrompt(nextStep) });
             feedbackUntil = now + 900;
             updateRangeDescription();
             setCue(feedback, "");
@@ -1648,7 +2335,7 @@
           lastSlideAt = now;
           addImpulse(direction, 0.95, 240, now);
           playSlideSound();
-          if (phase === "opening" && getCurrentStep().type === "slide") advanceCombo(now, "Przesuw!");
+          if (phase === "opening" && getCurrentStep().type === "slide") advanceCombo(now, "res.slide");
         }
 
         function performStanceSwitch(now) {
@@ -1657,11 +2344,11 @@
           playSlideSound();
           if (phase === "opening" && getCurrentStep().type === "switch") {
             if (stanceSwapped) {
-              feedback = "Zmieniłeś postawę — teraz wróć R3, zanim ruszysz dalej.";
+              feedback = msg("sw.exposed");
               feedbackUntil = now + 1200;
               setCue(feedback, "warning");
             } else {
-              advanceCombo(now, "Postawa odzyskana!");
+              advanceCombo(now, "res.stance");
             }
           }
         }
@@ -1670,7 +2357,7 @@
           if (!running || (phase !== "opening" && phase !== "waiting")) return;
           if (now < switchUntil || now < kickUntil) return;
           if (phase === "waiting") {
-            feedback = "Poczekaj na sygnał partnera.";
+            feedback = msg("wait.signal");
             feedbackUntil = now + 1200;
             setCue(feedback, "warning");
             return;
@@ -1679,13 +2366,13 @@
           addImpulse(new BABYLON.Vector3(Math.sin(playerYaw), 0, Math.cos(playerYaw)), leg === "front" ? 0.14 : 0.32, kickDuration, now);
           const step = getCurrentStep();
           if (step.type) {
-            feedback = step.type === "slide" ? "Najpierw przesuw (L1) w stronę partnera." : "Najpierw wróć w postawę (R3).";
+            feedback = msg(step.type === "slide" ? "need.slide" : "need.switch");
             feedbackUntil = now + 1200;
             setCue(feedback, "warning");
             return;
           }
           if (step.leg !== leg) {
-            feedback = `Użyj nogi ${step.leg === "front" ? "wykrocznej" : "zakrocznej"} ${padLabel(step.leg === "front" ? "kickLead" : "kickRear")} do tego ruchu.`;
+            feedback = msg(step.leg === "front" ? "wrong.lead" : "wrong.rear", { btn: () => padLabel(step.leg === "front" ? "kickLead" : "kickRear") });
             feedbackUntil = now + 1200;
             setCue(feedback, "warning");
             return;
@@ -1698,20 +2385,20 @@
           const range = getPersonalizedRange(step);
           const slideReach = now - lastSlideAt < 700 ? 0.45 : 0;
           if (distance > range.max + slideReach) {
-            feedback = `Za daleko (${distance.toFixed(1)} m) — przesuń się (L1) albo kop drugim kopnięciem z bliższej pozycji: ${step.name}.`;
+            feedback = msg("kick.far", { d: distance.toFixed(1), step: () => stepName(step) });
             feedbackUntil = now + 1500;
             setCue(feedback, "warning");
             return;
           }
           if (distance < range.min) {
-            feedback = `Za blisko (${distance.toFixed(1)} m) — odsuń się i spróbuj ponownie: ${step.name}.`;
+            feedback = msg("kick.near", { d: distance.toFixed(1), step: () => stepName(step) });
             feedbackUntil = now + 1500;
             setCue(feedback, "warning");
             return;
           }
           opponentReactStart = now;
           opponentReactUntil = now + 420;
-          advanceCombo(now, slideReach && distance > range.max ? "Kopnięcie ze wślizgu!" : "");
+          advanceCombo(now, slideReach && distance > range.max ? "res.slideKick" : "");
         }
 
         function update(now) {
@@ -1732,7 +2419,7 @@
           let menuStartPressed = false;
 
           if (pad) {
-            deviceLabel.textContent = "Pad: DualSense wykryty";
+            deviceLabel.textContent = t("dev.connected");
             deviceLabel.classList.add("connected");
             strafe += deadzone(pad.axes[0] || 0);
             forward -= deadzone(pad.axes[1] || 0);
@@ -1742,7 +2429,7 @@
             menuRightPressed = Boolean(pad.buttons[15]?.pressed);
             menuStartPressed = Boolean(pad.buttons[9]?.pressed);
           } else {
-            deviceLabel.textContent = "Pad: oczekiwanie · klawiatura aktywna";
+            deviceLabel.textContent = t("dev.waitingKeyboard");
             deviceLabel.classList.remove("connected");
           }
 
@@ -1800,7 +2487,7 @@
           // Torso is the spring: it turns about 3x faster than the legs.
           torsoBlend = BABYLON.Scalar.Clamp(torsoBlend + Math.sign(stanceTarget - torsoBlend) * dt / 0.13, 0, 1);
           if (Math.abs(stanceTarget - torsoBlend) < 0.001) torsoBlend = stanceTarget;
-          stanceLabel.textContent = stanceSwapped ? "ODSŁONIĘTA" : "ZAMKNIĘTA";
+          stanceLabel.textContent = t(stanceSwapped ? "stance.exposed" : "stance.closed");
           stanceLabel.style.color = stanceSwapped ? "#ffb35c" : "#81e3a2";
           playerShadowMaterial.diffuseColor = BABYLON.Color3.FromHexString(stanceSwapped ? "#d9731a" : "#0b1118");
           playerShadowMaterial.alpha = stanceSwapped ? 0.55 : 0.28;
@@ -1817,19 +2504,22 @@
             opponentAttackImpactAt = now + 850;
             opponentAttackUntil = now + 1250;
             nextOpponentAttackAt = Infinity;
-            setCue(`PARTNER KOPIE — trzymaj ${padLabel("guard")}, aby zasłonić się gardą!`, "danger");
+            setCue(msg("cue.attack", { guard: () => padLabel("guard") }), "danger");
           }
           if (running && now >= opponentAttackImpactAt) {
             opponentAttackImpactAt = Infinity;
             playGuardImpactSound(guarding && !stanceSwapped);
             if (guarding && !stanceSwapped) {
-              opponentAttackFeedback = "Dobra garda — zablokowałeś kopnięcie partnera.";
+              opponentAttackFeedback = msg("atk.blocked");
+              opponentAttackHit = false;
             } else if (stanceSwapped) {
-              opponentAttackFeedback = "Trafienie! Odsłonięta strona po kopnięciu zakrocznym — wróć w postawę (R3).";
+              opponentAttackFeedback = msg("atk.hitExposed");
+              opponentAttackHit = true;
               streak = 0;
               updateHud();
             } else {
-              opponentAttackFeedback = "Trafienie! Następnym razem trzymaj " + padLabel("guard") + " podczas ataku.";
+              opponentAttackFeedback = msg("atk.hit", { guard: () => padLabel("guard") });
+              opponentAttackHit = true;
               streak = 0;
               updateHud();
             }
@@ -1840,7 +2530,7 @@
           if (running && phase === "opening" && now >= phaseEnds) {
             streak = 0;
             updateHud();
-            feedback = "Czas na kombinację minął — obserwuj następny sygnał.";
+            feedback = msg("timeout");
             feedbackUntil = now + 1500;
             setPhase("waiting", now);
             setCue(feedback, "warning");
@@ -1856,7 +2546,7 @@
               updateHud();
               if (reps >= 5) setPhase("finished", now);
               else {
-                feedback = "Sekwencja zaliczona — dobra gotowość!";
+                feedback = msg("seq.ok");
                 feedbackUntil = now + 1400;
                 setPhase("waiting", now);
                 setCue(feedback);
@@ -1864,7 +2554,7 @@
             } else if (now >= phaseEnds) {
               streak = 0;
               updateHud();
-              feedback = "Pamiętaj o wyjściu po kopnięciu.";
+              feedback = msg("seq.leave");
               feedbackUntil = now + 1600;
               setPhase("waiting", now);
               setCue(feedback, "warning");
@@ -1887,12 +2577,12 @@
             : distance > currentRange.max ? "#ffcf70" : "#ff8c82";
           rangeMarker.style.left = `${BABYLON.Scalar.Clamp(distance / 7, 0, 1) * 100}%`;
           rangeTrack.setAttribute("aria-valuenow", distance.toFixed(1));
-          rangeTrack.setAttribute("aria-valuetext", `${distance.toFixed(1)} m; zakres ćwiczenia ${currentRange.min.toFixed(1)}–${currentRange.max.toFixed(1)} m`);
+          rangeTrack.setAttribute("aria-valuetext", t("range.valuetext", { d: distance.toFixed(1), min: currentRange.min.toFixed(1), max: currentRange.max.toFixed(1) }));
           rangeState.textContent = inPracticeRange
-            ? "W zakresie ćwiczenia"
-            : distance > currentRange.max ? "Za daleko — skróć dystans" : "Za blisko — zwiększ dystans";
+            ? t("range.in")
+            : distance > currentRange.max ? t("range.far") : t("range.near");
           rangeState.className = inPracticeRange ? "good" : distance < currentRange.min ? "close" : "";
-          guardLabel.textContent = guarding ? "AKTYWNA" : "—";
+          guardLabel.textContent = guarding ? t("guard.active") : "—";
           guardLabel.style.color = guarding ? "#81e3a2" : "";
 
           const opponentTargetX = Math.sin(now / 1150) * 0.62;
@@ -2010,7 +2700,7 @@
           playerShadow.position.z = playerPosition.z;
           playerShadow.scaling.set(1.15 + bounce * 0.12, 0.75 + bounce * 0.08, 1);
           playerAvatar.setEnabled(!firstPerson);
-          viewModeLabel.textContent = firstPerson ? "Widok 1. osoby · L3/V: zmień" : "Widok zza zawodnika · L3/V: zmień";
+          viewModeLabel.textContent = t(firstPerson ? "view.first" : "view.fighter");
           if (firstPerson) {
             camera.position.set(playerPosition.x, 1.65 * (playerHeightCm / referenceHeightCm) + playerBounce, playerPosition.z);
             camera.rotation.y = playerYaw;
@@ -2030,10 +2720,9 @@
             camera.setTarget(target);
           }
           if (now < opponentAttackFeedbackUntil) {
-            setCue(opponentAttackFeedback, opponentAttackFeedback.startsWith("Trafienie") ? "warning" : "");
-          } else if (phase === "opening" && (cueLabel.textContent.startsWith("Dobra garda") || cueLabel.textContent.startsWith("Trafienie!"))) {
-            const step = getCurrentStep();
-            setCue(`WEJDŹ · ${stepPrompt(step)}`, "warning");
+            setCue(opponentAttackFeedback, opponentAttackHit ? "warning" : "");
+          } else if (phase === "opening" && cueMessage === opponentAttackFeedback) {
+            setCue(goCue(getCurrentStep()), "warning");
           }
         }
 
@@ -2051,7 +2740,7 @@
         window.addEventListener("blur", () => keys.clear());
         window.addEventListener("gamepadconnected", (event) => {
           activeGamepadIndex = event.gamepad.index;
-          deviceLabel.textContent = "Pad: DualSense wykryty";
+          deviceLabel.textContent = t("dev.connected");
           deviceLabel.classList.add("connected");
         });
         window.addEventListener("gamepaddisconnected", (event) => {
@@ -2068,6 +2757,20 @@
           if (event.target.id === "replay-exit") exitReplay();
         });
         window.addEventListener("keydown", (event) => { if (event.key === "Escape" && replay) exitReplay(); });
+        function renderLanguage() {
+          setSoundState(soundState);
+          renderComboLabels();
+          renderComboDescription();
+          setHeightStatus(heightStatusMsg);
+          setBindingStatus(bindingStatusMsg);
+          renderProfileUi();
+          setLesson(lessonTitleMsg, lessonDescMsg);
+          setCue(cueMessage, cueMood);
+          renderStart();
+          renderReplayTitle();
+        }
+        window.KickitI18n.onChange(renderLanguage);
+        renderLanguage();
         engine.runRenderLoop(() => {
           update(performance.now());
           scene.render();

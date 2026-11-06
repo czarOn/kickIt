@@ -144,6 +144,8 @@ src/
 
 Warto od początku utrzymywać osobne interfejsy dla źródła sterowania (klawiatura, pad, kamera), przebiegu ćwiczenia i zapisu progresu. Dzięki temu dodanie kamery lub serwera nie wymusi przebudowy całej gry.
 
+Interfejs strony głównej, gry i analizy kamery jest dostępny po angielsku (domyślnie), po polsku i po koreańsku. Wybór języka jest zapisywany lokalnie w przeglądarce i współdzielony między stronami; nie zmienia formatu eksportowanych danych analizy.
+
 ## 6. Zasady bezpieczeństwa i prywatności
 
 - To narzędzie edukacyjne, a nie certyfikowany trener, system medyczny ani zamiennik zajęć.
