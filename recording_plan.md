@@ -7,6 +7,7 @@ Goal: record clean reference examples of each kick with 3 synchronized cameras, 
 ## 1. Setup (once)
 
 - Cameras: side, front, rear-45°. Same fps (1080p60), locked focus/exposure, fixed on stands. See sync notes: clap at the start and end of every take, say the take name aloud.
+- In [the camera analyzer](./pose.html), use **Show alignment grid and center point** (enabled by default) while positioning each camera. Place one visible marker at the shared recording point and aim all three center points at that same marker. Use the grid to level each view and leave room for the full body and movement path. Hide it with the checkbox when finished. The guide is preview-only, is not included in exported pose data, and does not synchronize cameras or perform multi-camera calibration.
 - Floor marker where the player starts, 1 m reference stick/tape visible to all cameras.
 - Player in a contrasting uniform, fitted (no loose sleeves), barefoot or in the usual footwear.
 - Space: at least 4 m in kick direction, 3 m to each side.
@@ -79,6 +80,8 @@ The coach's quality score per take is what lets us later compare the camera numb
 ## 6. What the recordings will be used for
 
 ### Optional pose-point reference capture
+
+The analyzer's main column follows the recording workflow: **Source** controls at the top, then the camera/video preview with its alignment grid, then **Poomsae reference: capture pose points**. On narrow screens, the learning pilot and measurements follow below this workflow.
 
 In [the camera analyzer](./pose.html), start the camera or play a video you have permission to use, then use **Start point capture** and **Stop capture**. **Export points JSON** downloads all 33 estimated MediaPipe image and world landmarks with relative timestamps; it does not include video frames. Up to 24 samples per second are stored, for at most 120 seconds or 3,600 detected samples, whichever comes first. The actual rate can be lower due to camera or device performance. Check the full-body visibility message throughout the form; it is an estimate, and low-visibility points are still saved. The points remain in memory until deleted, the source is reset, or the page closes; the exported file remains wherever you save it.
 

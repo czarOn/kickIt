@@ -14,6 +14,9 @@
     .stage { position: relative; background: #000; border-radius: 8px; overflow: hidden; }
     video, canvas { display: block; width: 100%; height: auto; }
     canvas { position: absolute; inset: 0; height: 100%; pointer-events: none; }
+    .alignment-guide { position: absolute; inset: 0; pointer-events: none; }
+    .alignment-guide svg { display: block; width: 100%; height: 100%; }
+    .alignment-center { position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; box-sizing: border-box; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 50%; background: #e33; box-shadow: 0 0 0 2px #000; }
     .panel { background: #1a222c; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
     .panel h2 { font-size: .95rem; margin: 0 0 8px; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
@@ -57,12 +60,57 @@
   </header>
   <main>
     <section>
+      <div class="panel">
+        <h2 data-i18n="source">Source</h2>
+        <div class="row">
+          <input class="file-input" type="file" id="file" accept="video/*">
+          <label class="file-label" for="file" data-i18n="chooseFile">Choose video</label>
+          <span id="fileName">No video selected</span>
+          <button id="cam" disabled data-i18n="camera">Camera</button>
+          <button id="stop" disabled data-i18n="stop">Stop</button>
+        </div>
+        <div class="row">
+          <label><span data-i18n="videoSpeed">Video speed</span>
+            <select id="rate"><option value="1">1×</option><option value="0.5" selected>0.5×</option><option value="0.25">0.25×</option></select>
+          </label>
+          <label><span data-i18n="height">Athlete height (cm)</span> <input type="number" id="height" value="170" min="100" max="220" style="width:5rem"></label>
+        </div>
+        <div class="row">
+          <label><span data-i18n="threshold">“Leg raised” threshold</span> <input type="range" id="thr" min="-0.8" max="0.2" step="0.05" value="-0.4"> <span id="thrv">-0.40</span></label>
+        </div>
+      </div>
       <div class="stage">
         <video id="video" playsinline muted controls></video>
         <canvas id="overlay"></canvas>
+        <div id="alignmentGuide" class="alignment-guide" aria-hidden="true">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M25 0V100 M50 0V100 M75 0V100 M0 25H100 M0 50H100 M0 75H100" fill="none" stroke="#000" stroke-width="3" vector-effect="non-scaling-stroke"/>
+            <path d="M25 0V100 M50 0V100 M75 0V100 M0 25H100 M0 50H100 M0 75H100" fill="none" stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke"/>
+          </svg>
+          <span class="alignment-center"></span>
+        </div>
       </div>
+      <label><input id="alignmentToggle" type="checkbox" checked aria-controls="alignmentGuide" aria-describedby="alignmentNote"> <span data-i18n="alignmentToggle">Show alignment grid and center point</span></label>
+      <p id="alignmentNote" class="note" data-i18n="alignmentNote">Before recording, place a visible marker at the shared recording point. Aim each of the three cameras so its center point covers that same marker. Use the grid to keep the view level and leave room for the whole movement. This preview guide is not exported and does not synchronize or calibrate cameras.</p>
       <p id="status" role="status">Loading pose model…</p>
       <p class="note" data-i18n="recordingNote">Record from the side with the whole athlete in frame (head to feet). Keep the phone still on a tripod or support, about 3 m from the athlete, with good lighting and contrasting clothing. Ideally use 60 fps (iPhone slow motion). Left and right refer to the athlete's sides.</p>
+      <div class="panel">
+        <h2 data-i18n="skeletonTitle">Poomsae reference: capture pose points</h2>
+        <p class="note" data-i18n="skeletonNote">For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.</p>
+        <p class="note" data-i18n="skeletonSaveNote">Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
+        <p class="note" data-i18n="fullBodyNote">For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.</p>
+        <div class="row">
+          <button id="skeletonStart" disabled data-i18n="skeletonStart">Start point capture</button>
+          <button id="clapStart" disabled data-i18n="clapStart">Start on two claps</button>
+          <button id="skeletonStop" disabled data-i18n="skeletonStop">Stop capture</button>
+          <button id="skeletonExport" disabled data-i18n="skeletonExport">Export points JSON</button>
+          <button id="skeletonClear" disabled data-i18n="skeletonClear">Delete points</button>
+        </div>
+        <p id="skeletonStatus" role="status"></p>
+        <p id="bodyVisibility" role="status"></p>
+        <p class="note" data-i18n="clapNote">Optional: allow microphone access, stand in position and clap twice, about half a second apart. Audio is analyzed locally, never recorded or uploaded. Wait for the recording status before moving; background noise may trigger or mask claps.</p>
+        <p><a href="poomsae.html" target="_blank" rel="noopener" data-i18n="poomsaePlayback">Open 3D Poomsae playback (export points first)</a></p>
+      </div>
     </section>
     <section>
       <div class="panel">
@@ -90,25 +138,6 @@
         <p data-i18n="lessonPrivacy">Camera frames are processed locally. The instructor reference is held in memory only. The analyzer keeps derived measurements in memory and exports them only when requested. No video or coordinates are uploaded.</p>
       </div>
       <div class="panel">
-        <h2 data-i18n="source">Source</h2>
-        <div class="row">
-          <input class="file-input" type="file" id="file" accept="video/*">
-          <label class="file-label" for="file" data-i18n="chooseFile">Choose video</label>
-          <span id="fileName">No video selected</span>
-          <button id="cam" disabled data-i18n="camera">Camera</button>
-          <button id="stop" disabled data-i18n="stop">Stop</button>
-        </div>
-        <div class="row">
-          <label><span data-i18n="videoSpeed">Video speed</span>
-            <select id="rate"><option value="1">1×</option><option value="0.5" selected>0.5×</option><option value="0.25">0.25×</option></select>
-          </label>
-          <label><span data-i18n="height">Athlete height (cm)</span> <input type="number" id="height" value="170" min="100" max="220" style="width:5rem"></label>
-        </div>
-        <div class="row">
-          <label><span data-i18n="threshold">“Leg raised” threshold</span> <input type="range" id="thr" min="-0.8" max="0.2" step="0.05" value="-0.4"> <span id="thrv">-0.40</span></label>
-        </div>
-      </div>
-      <div class="panel">
         <h2 data-i18n="live">Live</h2>
         <div class="live">
           <div><small data-i18n="kneeLeft">Left knee (angle)</small><b id="kneeL">—</b></div>
@@ -118,23 +147,6 @@
           <div><small data-i18n="twist">Shoulder–hip rotation</small><b id="twist">—</b></div>
           <div><small data-i18n="lean">Torso lean</small><b id="lean">—</b></div>
         </div>
-      </div>
-      <div class="panel">
-        <h2 data-i18n="skeletonTitle">Poomsae reference: capture pose points</h2>
-        <p class="note" data-i18n="skeletonNote">For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.</p>
-        <p class="note" data-i18n="skeletonSaveNote">Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
-        <p class="note" data-i18n="fullBodyNote">For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.</p>
-        <div class="row">
-          <button id="skeletonStart" disabled data-i18n="skeletonStart">Start point capture</button>
-          <button id="clapStart" disabled data-i18n="clapStart">Start on two claps</button>
-          <button id="skeletonStop" disabled data-i18n="skeletonStop">Stop capture</button>
-          <button id="skeletonExport" disabled data-i18n="skeletonExport">Export points JSON</button>
-          <button id="skeletonClear" disabled data-i18n="skeletonClear">Delete points</button>
-        </div>
-        <p id="skeletonStatus" role="status"></p>
-        <p id="bodyVisibility" role="status"></p>
-        <p class="note" data-i18n="clapNote">Optional: allow microphone access, stand in position and clap twice, about half a second apart. Audio is analyzed locally, never recorded or uploaded. Wait for the recording status before moving; background noise may trigger or mask claps.</p>
-        <p><a href="poomsae.html" target="_blank" rel="noopener" data-i18n="poomsaePlayback">Open 3D Poomsae playback (export points first)</a></p>
       </div>
       <div class="panel">
         <h2 data-i18n="detected">Detected kicks</h2>
@@ -217,6 +229,8 @@
     };
     const languageSelect = document.getElementById("language");
     Object.assign(translations.en, {
+      alignmentToggle: "Show alignment grid and center point",
+      alignmentNote: "Before recording, place a visible marker at the shared recording point. Aim each of the three cameras so its center point covers that same marker. Use the grid to keep the view level and leave room for the whole movement. This preview guide is not exported and does not synchronize or calibrate cameras.",
       poomsaePlayback: "Open 3D Poomsae playback (export points first)",
       fullBodyNote: "For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.",
       bodyUnknown: "Start the camera or play a video to check body visibility.", bodyVisible: "Head, arms and legs appear visible. Keep the whole movement path in frame.", bodyMissing: "Some head, arm or leg points are missing, uncertain or outside the image. Adjust the camera; captured points may be incomplete.",
@@ -224,6 +238,8 @@
       clapRequest: "Waiting for microphone permission…", clapWaiting: "Listening for two claps; use Stop to cancel.", clapFirst: "First sound detected — clap once more.", clapReset: "Two claps detected. Refreshing pose tracking; wait for recording.", clapFailed: "Microphone or pose refresh failed. Try again or use manual start.", clapCancelled: "Clap start cancelled. Existing points were kept."
     });
     Object.assign(translations.pl, {
+      alignmentToggle: "Pokaż siatkę i punkt środkowy",
+      alignmentNote: "Przed nagrywaniem umieść widoczny znacznik we wspólnym punkcie nagrania. Skieruj każdą z trzech kamer tak, aby jej punkt środkowy pokrywał ten sam znacznik. Użyj siatki do wypoziomowania kadru i zostaw miejsce na cały ruch. Ta nakładka podglądu nie jest eksportowana ani nie synchronizuje i nie kalibruje kamer.",
       poomsaePlayback: "Otwórz odtwarzanie Poomsae 3D (najpierw wyeksportuj punkty)",
       fullBodyNote: "Do odtwarzania Poomsae 3D ustaw całą sylwetkę od głowy do stóp w kadrze przez cały układ. Przechwytywanie zapisuje 33 szacowane punkty do 24 razy na sekundę przez maksymalnie 120 sekund. CSV i JSON kopnięć są osobnymi eksportami, nie nagraniem całego ciała.",
       bodyUnknown: "Uruchom kamerę lub odtwórz film, aby sprawdzić widoczność sylwetki.", bodyVisible: "Głowa, ręce i nogi są prawdopodobnie widoczne. Utrzymaj całą trasę ruchu w kadrze.", bodyMissing: "Niektórych punktów głowy, rąk lub nóg brakuje, są niepewne albo poza kadrem. Ustaw kamerę; nagrane punkty mogą być niekompletne.",
@@ -231,6 +247,8 @@
       clapRequest: "Oczekiwanie na zgodę na mikrofon…", clapWaiting: "Nasłuchiwanie dwóch klaśnięć; przyciskiem Stop możesz anulować.", clapFirst: "Wykryto pierwszy dźwięk — klaśnij ponownie.", clapReset: "Wykryto dwa klaśnięcia. Odświeżanie śledzenia pozy; zaczekaj na nagrywanie.", clapFailed: "Nie udało się uruchomić mikrofonu lub odświeżyć śledzenia. Spróbuj ponownie albo użyj startu ręcznego.", clapCancelled: "Anulowano start po klaśnięciach. Zachowano poprzednie punkty."
     });
     Object.assign(translations.ko, {
+      alignmentToggle: "정렬 격자와 중심점 표시",
+      alignmentNote: "기록 전에 공통 촬영 지점에 눈에 잘 띄는 표식을 놓으세요. 세 카메라의 중심점이 모두 같은 표식을 가리키도록 조정하세요. 격자로 수평을 맞추고 전체 동작이 화면에 들어오도록 여유를 두세요. 이 미리보기 안내선은 내보내기에 포함되지 않으며 카메라를 동기화하거나 보정하지 않습니다.",
       poomsaePlayback: "3D 품새 재생 열기 (먼저 점 내보내기)",
       fullBodyNote: "3D 품새 재생을 위해 전체 동작 동안 머리부터 발끝까지 화면에 담으세요. 추정된 33개 점을 최대 초당 24회, 최대 120초 동안 기록합니다. 발차기 CSV와 JSON은 전신 기록이 아닙니다.",
       bodyUnknown: "카메라나 영상을 시작하여 전신 가시성을 확인하세요.", bodyVisible: "머리, 팔, 다리가 보이는 것으로 추정됩니다. 전체 이동 경로를 화면에 담으세요.", bodyMissing: "머리, 팔 또는 다리의 일부 점이 없거나 불확실하거나 화면 밖에 있습니다. 카메라를 조정하세요. 기록이 불완전할 수 있습니다.",
@@ -281,6 +299,9 @@
     }
     setLanguage(savedLanguage, false);
     languageSelect.addEventListener("change", () => setLanguage(languageSelect.value));
+    document.getElementById("alignmentToggle").addEventListener("change", (event) => {
+      document.getElementById("alignmentGuide").hidden = !event.target.checked;
+    });
     document.getElementById("file").addEventListener("change", renderFileName);
     window.addEventListener("storage", (event) => {
       if (event.key === "kickit-language" || event.key === null) setLanguage(event.newValue, false);
