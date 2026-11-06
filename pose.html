@@ -36,6 +36,19 @@
     a { color: #9de7ba; }
     .language { margin-left: auto; }
     .storage-warning { flex-basis: 100%; margin: 0; color: #ffd37a; font-size: .85rem; }
+    body.compact-guidance [data-i18n="intro"],
+    body.compact-guidance [data-i18n="alignmentNote"],
+    body.compact-guidance [data-i18n="recordingNote"],
+    body.compact-guidance [data-i18n="skeletonNote"],
+    body.compact-guidance [data-i18n="skeletonSaveNote"],
+    body.compact-guidance [data-i18n="fullBodyNote"],
+    body.compact-guidance [data-i18n="clapNote"],
+    body.compact-guidance [data-i18n="lessonSafety"],
+    body.compact-guidance [data-i18n="lessonMirror"],
+    body.compact-guidance [data-i18n="lessonPrivacy"],
+    body.compact-guidance [data-i18n="metricsNote"] { display: none; }
+    .compact-reminder { display: none; }
+    body.compact-guidance .compact-reminder { display: block; }
     .file-label { display: inline-block; cursor: pointer; background: #2a3644; color: #e8eef5; border: 1px solid #3b4a5c; border-radius: 6px; padding: 6px 10px; font-size: 1rem; }
     .file-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
     .file-input:focus-visible + .file-label { outline: 2px solid #ffd37a; outline-offset: 2px; }
@@ -56,6 +69,7 @@
         <option value="ko">🇰🇷 한국어</option>
       </select>
     </label>
+    <label><input id="guidanceToggle" type="checkbox" checked> <span data-i18n="showGuidance">Show detailed guidance</span></label>
     <p id="storageWarning" class="storage-warning" role="status" hidden></p>
   </header>
   <main>
@@ -96,6 +110,7 @@
       <p class="note" data-i18n="recordingNote">Record from the side with the whole athlete in frame (head to feet). Keep the phone still on a tripod or support, about 3 m from the athlete, with good lighting and contrasting clothing. Ideally use 60 fps (iPhone slow motion). Left and right refer to the athlete's sides.</p>
       <div class="panel">
         <h2 data-i18n="skeletonTitle">Poomsae reference: capture pose points</h2>
+        <p class="note compact-reminder" data-i18n="captureReminder">Keep a clear space and the whole body in frame. Get guardian permission for children. Export points before closing; they are not saved automatically. This is not a technique assessment.</p>
         <p class="note" data-i18n="skeletonNote">For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.</p>
         <p class="note" data-i18n="skeletonSaveNote">Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
         <p class="note" data-i18n="fullBodyNote">For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.</p>
@@ -229,6 +244,8 @@
     };
     const languageSelect = document.getElementById("language");
     Object.assign(translations.en, {
+      showGuidance: "Show detailed guidance",
+      captureReminder: "Keep a clear space and the whole body in frame. Get guardian permission for children. Export points before closing; they are not saved automatically. This is not a technique assessment.",
       alignmentToggle: "Show alignment grid and center point",
       alignmentNote: "Before recording, place a visible marker at the shared recording point. Aim each of the three cameras so its center point covers that same marker. Use the grid to keep the view level and leave room for the whole movement. This preview guide is not exported and does not synchronize or calibrate cameras.",
       poomsaePlayback: "Open 3D Poomsae playback (export points first)",
@@ -238,6 +255,8 @@
       clapRequest: "Waiting for microphone permission…", clapWaiting: "Listening for two claps; use Stop to cancel.", clapFirst: "First sound detected — clap once more.", clapReset: "Two claps detected. Refreshing pose tracking; wait for recording.", clapFailed: "Microphone or pose refresh failed. Try again or use manual start.", clapCancelled: "Clap start cancelled. Existing points were kept."
     });
     Object.assign(translations.pl, {
+      showGuidance: "Pokaż szczegółowe wskazówki",
+      captureReminder: "Zadbaj o wolną przestrzeń i całą sylwetkę w kadrze. Dla dzieci uzyskaj zgodę opiekuna. Wyeksportuj punkty przed zamknięciem; nie zapisują się automatycznie. To nie jest ocena techniki.",
       alignmentToggle: "Pokaż siatkę i punkt środkowy",
       alignmentNote: "Przed nagrywaniem umieść widoczny znacznik we wspólnym punkcie nagrania. Skieruj każdą z trzech kamer tak, aby jej punkt środkowy pokrywał ten sam znacznik. Użyj siatki do wypoziomowania kadru i zostaw miejsce na cały ruch. Ta nakładka podglądu nie jest eksportowana ani nie synchronizuje i nie kalibruje kamer.",
       poomsaePlayback: "Otwórz odtwarzanie Poomsae 3D (najpierw wyeksportuj punkty)",
@@ -247,6 +266,8 @@
       clapRequest: "Oczekiwanie na zgodę na mikrofon…", clapWaiting: "Nasłuchiwanie dwóch klaśnięć; przyciskiem Stop możesz anulować.", clapFirst: "Wykryto pierwszy dźwięk — klaśnij ponownie.", clapReset: "Wykryto dwa klaśnięcia. Odświeżanie śledzenia pozy; zaczekaj na nagrywanie.", clapFailed: "Nie udało się uruchomić mikrofonu lub odświeżyć śledzenia. Spróbuj ponownie albo użyj startu ręcznego.", clapCancelled: "Anulowano start po klaśnięciach. Zachowano poprzednie punkty."
     });
     Object.assign(translations.ko, {
+      showGuidance: "자세한 안내 표시",
+      captureReminder: "안전한 공간에서 전신을 화면에 담으세요. 어린이는 보호자 동의가 필요합니다. 점은 자동 저장되지 않으므로 닫기 전에 내보내세요. 기술 평가는 제공하지 않습니다.",
       alignmentToggle: "정렬 격자와 중심점 표시",
       alignmentNote: "기록 전에 공통 촬영 지점에 눈에 잘 띄는 표식을 놓으세요. 세 카메라의 중심점이 모두 같은 표식을 가리키도록 조정하세요. 격자로 수평을 맞추고 전체 동작이 화면에 들어오도록 여유를 두세요. 이 미리보기 안내선은 내보내기에 포함되지 않으며 카메라를 동기화하거나 보정하지 않습니다.",
       poomsaePlayback: "3D 품새 재생 열기 (먼저 점 내보내기)",
@@ -299,6 +320,13 @@
     }
     setLanguage(savedLanguage, false);
     languageSelect.addEventListener("change", () => setLanguage(languageSelect.value));
+    const guidanceToggle = document.getElementById("guidanceToggle");
+    guidanceToggle.checked = !window.matchMedia("(max-width: 820px), (pointer: coarse)").matches;
+    function renderGuidance() {
+      document.body.classList.toggle("compact-guidance", !guidanceToggle.checked);
+    }
+    guidanceToggle.addEventListener("change", renderGuidance);
+    renderGuidance();
     document.getElementById("alignmentToggle").addEventListener("change", (event) => {
       document.getElementById("alignmentGuide").hidden = !event.target.checked;
     });
