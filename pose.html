@@ -60,6 +60,25 @@
   </header>
   <main>
     <section>
+      <div class="panel">
+        <h2 data-i18n="source">Source</h2>
+        <div class="row">
+          <input class="file-input" type="file" id="file" accept="video/*">
+          <label class="file-label" for="file" data-i18n="chooseFile">Choose video</label>
+          <span id="fileName">No video selected</span>
+          <button id="cam" disabled data-i18n="camera">Camera</button>
+          <button id="stop" disabled data-i18n="stop">Stop</button>
+        </div>
+        <div class="row">
+          <label><span data-i18n="videoSpeed">Video speed</span>
+            <select id="rate"><option value="1">1×</option><option value="0.5" selected>0.5×</option><option value="0.25">0.25×</option></select>
+          </label>
+          <label><span data-i18n="height">Athlete height (cm)</span> <input type="number" id="height" value="170" min="100" max="220" style="width:5rem"></label>
+        </div>
+        <div class="row">
+          <label><span data-i18n="threshold">“Leg raised” threshold</span> <input type="range" id="thr" min="-0.8" max="0.2" step="0.05" value="-0.4"> <span id="thrv">-0.40</span></label>
+        </div>
+      </div>
       <div class="stage">
         <video id="video" playsinline muted controls></video>
         <canvas id="overlay"></canvas>
@@ -75,6 +94,23 @@
       <p id="alignmentNote" class="note" data-i18n="alignmentNote">Before recording, place a visible marker at the shared recording point. Aim each of the three cameras so its center point covers that same marker. Use the grid to keep the view level and leave room for the whole movement. This preview guide is not exported and does not synchronize or calibrate cameras.</p>
       <p id="status" role="status">Loading pose model…</p>
       <p class="note" data-i18n="recordingNote">Record from the side with the whole athlete in frame (head to feet). Keep the phone still on a tripod or support, about 3 m from the athlete, with good lighting and contrasting clothing. Ideally use 60 fps (iPhone slow motion). Left and right refer to the athlete's sides.</p>
+      <div class="panel">
+        <h2 data-i18n="skeletonTitle">Poomsae reference: capture pose points</h2>
+        <p class="note" data-i18n="skeletonNote">For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.</p>
+        <p class="note" data-i18n="skeletonSaveNote">Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
+        <p class="note" data-i18n="fullBodyNote">For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.</p>
+        <div class="row">
+          <button id="skeletonStart" disabled data-i18n="skeletonStart">Start point capture</button>
+          <button id="clapStart" disabled data-i18n="clapStart">Start on two claps</button>
+          <button id="skeletonStop" disabled data-i18n="skeletonStop">Stop capture</button>
+          <button id="skeletonExport" disabled data-i18n="skeletonExport">Export points JSON</button>
+          <button id="skeletonClear" disabled data-i18n="skeletonClear">Delete points</button>
+        </div>
+        <p id="skeletonStatus" role="status"></p>
+        <p id="bodyVisibility" role="status"></p>
+        <p class="note" data-i18n="clapNote">Optional: allow microphone access, stand in position and clap twice, about half a second apart. Audio is analyzed locally, never recorded or uploaded. Wait for the recording status before moving; background noise may trigger or mask claps.</p>
+        <p><a href="poomsae.html" target="_blank" rel="noopener" data-i18n="poomsaePlayback">Open 3D Poomsae playback (export points first)</a></p>
+      </div>
     </section>
     <section>
       <div class="panel">
@@ -102,25 +138,6 @@
         <p data-i18n="lessonPrivacy">Camera frames are processed locally. The instructor reference is held in memory only. The analyzer keeps derived measurements in memory and exports them only when requested. No video or coordinates are uploaded.</p>
       </div>
       <div class="panel">
-        <h2 data-i18n="source">Source</h2>
-        <div class="row">
-          <input class="file-input" type="file" id="file" accept="video/*">
-          <label class="file-label" for="file" data-i18n="chooseFile">Choose video</label>
-          <span id="fileName">No video selected</span>
-          <button id="cam" disabled data-i18n="camera">Camera</button>
-          <button id="stop" disabled data-i18n="stop">Stop</button>
-        </div>
-        <div class="row">
-          <label><span data-i18n="videoSpeed">Video speed</span>
-            <select id="rate"><option value="1">1×</option><option value="0.5" selected>0.5×</option><option value="0.25">0.25×</option></select>
-          </label>
-          <label><span data-i18n="height">Athlete height (cm)</span> <input type="number" id="height" value="170" min="100" max="220" style="width:5rem"></label>
-        </div>
-        <div class="row">
-          <label><span data-i18n="threshold">“Leg raised” threshold</span> <input type="range" id="thr" min="-0.8" max="0.2" step="0.05" value="-0.4"> <span id="thrv">-0.40</span></label>
-        </div>
-      </div>
-      <div class="panel">
         <h2 data-i18n="live">Live</h2>
         <div class="live">
           <div><small data-i18n="kneeLeft">Left knee (angle)</small><b id="kneeL">—</b></div>
@@ -130,23 +147,6 @@
           <div><small data-i18n="twist">Shoulder–hip rotation</small><b id="twist">—</b></div>
           <div><small data-i18n="lean">Torso lean</small><b id="lean">—</b></div>
         </div>
-      </div>
-      <div class="panel">
-        <h2 data-i18n="skeletonTitle">Poomsae reference: capture pose points</h2>
-        <p class="note" data-i18n="skeletonNote">For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.</p>
-        <p class="note" data-i18n="skeletonSaveNote">Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
-        <p class="note" data-i18n="fullBodyNote">For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.</p>
-        <div class="row">
-          <button id="skeletonStart" disabled data-i18n="skeletonStart">Start point capture</button>
-          <button id="clapStart" disabled data-i18n="clapStart">Start on two claps</button>
-          <button id="skeletonStop" disabled data-i18n="skeletonStop">Stop capture</button>
-          <button id="skeletonExport" disabled data-i18n="skeletonExport">Export points JSON</button>
-          <button id="skeletonClear" disabled data-i18n="skeletonClear">Delete points</button>
-        </div>
-        <p id="skeletonStatus" role="status"></p>
-        <p id="bodyVisibility" role="status"></p>
-        <p class="note" data-i18n="clapNote">Optional: allow microphone access, stand in position and clap twice, about half a second apart. Audio is analyzed locally, never recorded or uploaded. Wait for the recording status before moving; background noise may trigger or mask claps.</p>
-        <p><a href="poomsae.html" target="_blank" rel="noopener" data-i18n="poomsaePlayback">Open 3D Poomsae playback (export points first)</a></p>
       </div>
       <div class="panel">
         <h2 data-i18n="detected">Detected kicks</h2>
