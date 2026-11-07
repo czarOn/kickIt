@@ -10,4 +10,5 @@ OIP-*.jpg
 perspective.jpg
 frames*.csv
 kicks*.json
+recordings/
 pose-landmarks*.json

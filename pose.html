@@ -122,7 +122,7 @@
       <div class="panel">
         <h2 data-i18n="skeletonTitle">Poomsae reference: capture pose points</h2>
         <p class="note" data-i18n="skeletonNote">For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.</p>
-        <p class="note" data-i18n="skeletonSaveNote">Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
+        <p class="note" data-i18n="skeletonSaveNote">By default, points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.</p>
         <p class="note" data-i18n="fullBodyNote">For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.</p>
         <div class="row">
           <button id="skeletonStart" disabled data-i18n="skeletonStart">Start point capture</button>
@@ -133,6 +133,16 @@
         </div>
         <p id="skeletonStatus" role="status"></p>
         <p id="bodyVisibility" role="status"></p>
+        <div id="localSavePanel" hidden>
+          <p class="note" data-i18n="localSaveNote">Optional: send the captured body points to your private PC over this local HTTPS connection. Video and audio are not sent. Use only with permission; anyone with access to the PC's recording folder can read them.</p>
+          <div class="row">
+            <label for="localSaveCode" data-i18n="localSaveCode">PC access code</label>
+            <input id="localSaveCode" type="password" autocomplete="off">
+            <button id="localSave" disabled data-i18n="localSave">Save points to this PC</button>
+          </div>
+          <label><input id="localAutoSave" type="checkbox"> <span data-i18n="localAutoSave">Automatically save points to this PC after capture stops (keep this page open until saved).</span></label>
+          <p id="localSaveStatus" role="status"></p>
+        </div>
         <p class="note" data-i18n="clapNote">Optional: allow microphone access, stand in position and clap twice, about half a second apart. Audio is analyzed locally, never recorded or uploaded. Wait for the recording status before moving; background noise may trigger or mask claps.</p>
         <p><a href="poomsae.html" target="_blank" rel="noopener" data-i18n="poomsaePlayback">Open 3D Poomsae playback (export points first)</a></p>
       </div>
@@ -168,7 +178,7 @@
         loading: "Loading pose model…", ready: "Model ready. Load a video or start the camera.", legsNotVisible: "The whole legs are not visible — move the camera back.",
         analysing: "Analysing…", videoLoaded: "Video loaded — press play.", cameraError: "Cannot access the camera.", cameraStopped: "Camera stopped.",
         modelError: "Could not load the model (internet connection required).", left: "left", right: "right", seconds: "s",
-        skeletonTitle: "Poomsae reference: capture pose points", skeletonNote: "For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.", skeletonSaveNote: "Points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.",
+        skeletonTitle: "Poomsae reference: capture pose points", skeletonNote: "For a reference, use a camera or a video you have permission to use. Start the capture, perform the movements, then stop and export. Only estimated body points are stored in memory; no video is recorded or sent. The exported points may identify a person. Get a parent's permission before capturing a child. This is not a technique assessment.", skeletonSaveNote: "By default, points are not saved automatically. After stopping, choose Export points JSON and check your browser's downloads or Files app before closing this page.",
         skeletonStart: "Start point capture", skeletonStop: "Stop capture", skeletonExport: "Export points JSON", skeletonClear: "Delete points",
         skeletonIdle: "No points captured. Start the camera or play a video first.", skeletonActive: "Capturing points. Stop capture to export.", skeletonDone: "Capture stopped. Points are held in memory until deleted or this page closes.", skeletonLimit: "Capture stopped at the limit of 120 seconds or 3,600 detected frames. Points are ready to export.", skeletonSeek: "Capture stopped because video time moved backwards. Export or delete the captured points.", skeletonEmpty: "No pose was detected during capture. Check the camera view and try again.", skeletonReplace: "This will delete the captured points. Continue?",
         lessonTitle: "Taegeuk Il Jang: learning pilot", lessonSafety: "Practice with an adult and a coach in a clear space. This unvalidated pilot cannot assess technique. Confirm the instructions with your coach.", lessonMirror: "The instructor skeleton is mirrored. Left and right in the instructions refer to the athlete's own body.", studentView: "Your camera skeleton", instructorView: "Instructor reference (mirrored)", lessonPrevious: "Previous", lessonRepeat: "Repeat instruction", lessonNext: "Next", lessonVoice: "Voice", lessonImport: "Load your authorized reference points JSON", lessonPlay: "Play reference", lessonPause: "Pause reference", lessonPrivacy: "Camera frames are processed locally. The instructor reference is held in memory only. The analyzer keeps derived measurements in memory and exports them only when requested. No video or coordinates are uploaded.",
@@ -188,7 +198,7 @@
         loading: "Ładowanie modelu pozy…", ready: "Model gotowy. Wczytaj film lub włącz kamerę.", legsNotVisible: "Nie widać całych nóg — cofnij kamerę.",
         analysing: "Analiza…", videoLoaded: "Film wczytany — naciśnij odtwarzanie.", cameraError: "Brak dostępu do kamery.", cameraStopped: "Kamera zatrzymana.",
         modelError: "Nie udało się załadować modelu (potrzebny internet).", left: "lewa", right: "prawa", seconds: "s",
-        skeletonTitle: "Wzorzec Poomsae: przechwytywanie punktów", skeletonNote: "Użyj kamery lub filmu, do którego masz prawa. Rozpocznij przechwytywanie, wykonaj ruchy, a potem zatrzymaj i wyeksportuj dane. Tylko przybliżone punkty ciała są przechowywane w pamięci; wideo nie jest nagrywane ani wysyłane. Punkty mogą identyfikować osobę. Przed przechwytywaniem dziecka uzyskaj zgodę rodzica. To nie jest ocena techniki.", skeletonSaveNote: "Punkty nie zapisują się automatycznie. Po zatrzymaniu wybierz Eksport punktów JSON i sprawdź pobrane pliki przeglądarki lub aplikację Pliki przed zamknięciem strony.",
+        skeletonTitle: "Wzorzec Poomsae: przechwytywanie punktów", skeletonNote: "Użyj kamery lub filmu, do którego masz prawa. Rozpocznij przechwytywanie, wykonaj ruchy, a potem zatrzymaj i wyeksportuj dane. Tylko przybliżone punkty ciała są przechowywane w pamięci; wideo nie jest nagrywane ani wysyłane. Punkty mogą identyfikować osobę. Przed przechwytywaniem dziecka uzyskaj zgodę rodzica. To nie jest ocena techniki.", skeletonSaveNote: "Domyślnie punkty nie zapisują się automatycznie. Po zatrzymaniu wybierz Eksport punktów JSON i sprawdź pobrane pliki przeglądarki lub aplikację Pliki przed zamknięciem strony.",
         skeletonStart: "Rozpocznij przechwytywanie", skeletonStop: "Zatrzymaj przechwytywanie", skeletonExport: "Eksport punktów JSON", skeletonClear: "Usuń punkty",
         skeletonIdle: "Brak punktów. Najpierw uruchom kamerę lub odtwórz film.", skeletonActive: "Przechwytywanie punktów. Zatrzymaj, aby wyeksportować.", skeletonDone: "Zatrzymano. Punkty pozostają w pamięci do usunięcia lub zamknięcia strony.", skeletonLimit: "Osiągnięto limit 120 sekund lub 3600 wykrytych klatek. Punkty są gotowe do eksportu.", skeletonSeek: "Zatrzymano, ponieważ czas filmu cofnął się. Wyeksportuj lub usuń punkty.", skeletonEmpty: "Nie wykryto sylwetki. Sprawdź kadr i spróbuj ponownie.", skeletonReplace: "Ta czynność usunie przechwycone punkty. Kontynuować?",
         lessonTitle: "Taegeuk Il Jang: pilot nauki", lessonSafety: "Ćwicz z dorosłym i trenerem, w bezpiecznej przestrzeni. Pilot nie jest zweryfikowany i nie ocenia techniki. Potwierdź instrukcje z trenerem.", lessonMirror: "Szkielet instruktora jest odbity lustrzanie. Lewa i prawa strona w instrukcjach oznaczają strony ciała ćwiczącego.", studentView: "Twój szkielet z kamery", instructorView: "Wzorzec instruktora (odbicie)", lessonPrevious: "Poprzedni", lessonRepeat: "Powtórz instrukcję", lessonNext: "Dalej", lessonVoice: "Głos", lessonImport: "Wczytaj własny, dozwolony plik JSON z punktami wzorca", lessonPlay: "Odtwórz wzorzec", lessonPause: "Pauza wzorca", lessonPrivacy: "Klatki z kamery są przetwarzane lokalnie. Wzorzec pozostaje w pamięci. Analizator przechowuje pomiary w pamięci i eksportuje je tylko na życzenie. Wideo ani współrzędne nie są wysyłane.",
@@ -208,7 +218,7 @@
         loading: "자세 모델을 불러오는 중…", ready: "모델이 준비되었습니다. 영상을 불러오거나 카메라를 켜세요.", legsNotVisible: "다리 전체가 보이지 않습니다. 카메라를 뒤로 옮기세요.",
         analysing: "분석 중…", videoLoaded: "영상을 불러왔습니다. 재생을 누르세요.", cameraError: "카메라에 접근할 수 없습니다.", cameraStopped: "카메라가 중지되었습니다.",
         modelError: "모델을 불러올 수 없습니다 (인터넷 연결 필요).", left: "왼쪽", right: "오른쪽", seconds: "초",
-        skeletonTitle: "품새 기준: 자세 점 기록", skeletonNote: "사용 허가를 받은 카메라나 영상을 이용하세요. 점 기록을 시작하고 동작을 수행한 뒤 중지하여 내보내세요. 추정된 신체 점만 메모리에 저장되며 영상은 녹화하거나 전송하지 않습니다. 내보낸 점으로 개인이 식별될 수 있습니다. 어린이의 점을 기록하기 전에 보호자의 동의를 받으세요. 기술 평가가 아닙니다.", skeletonSaveNote: "점은 자동으로 저장되지 않습니다. 중지 후 점 JSON 내보내기를 선택하고 페이지를 닫기 전에 브라우저 다운로드 또는 파일 앱을 확인하세요.",
+        skeletonTitle: "품새 기준: 자세 점 기록", skeletonNote: "사용 허가를 받은 카메라나 영상을 이용하세요. 점 기록을 시작하고 동작을 수행한 뒤 중지하여 내보내세요. 추정된 신체 점만 메모리에 저장되며 영상은 녹화하거나 전송하지 않습니다. 내보낸 점으로 개인이 식별될 수 있습니다. 어린이의 점을 기록하기 전에 보호자의 동의를 받으세요. 기술 평가가 아닙니다.", skeletonSaveNote: "기본적으로 점은 자동 저장되지 않습니다. 중지 후 점 JSON 내보내기를 선택하고 페이지를 닫기 전에 브라우저 다운로드 또는 파일 앱을 확인하세요.",
         skeletonStart: "점 기록 시작", skeletonStop: "기록 중지", skeletonExport: "점 JSON 내보내기", skeletonClear: "점 삭제",
         skeletonIdle: "기록된 점이 없습니다. 먼저 카메라를 켜거나 영상을 재생하세요.", skeletonActive: "점을 기록 중입니다. 내보내려면 기록을 중지하세요.", skeletonDone: "기록이 중지되었습니다. 점은 삭제하거나 페이지를 닫을 때까지 메모리에 남습니다.", skeletonLimit: "120초 또는 감지된 3,600프레임 제한에 도달하여 중지했습니다. 점을 내보낼 수 있습니다.", skeletonSeek: "영상 시간이 뒤로 이동해 기록을 중지했습니다. 점을 내보내거나 삭제하세요.", skeletonEmpty: "자세를 감지하지 못했습니다. 카메라 화면을 확인하고 다시 시도하세요.", skeletonReplace: "기록된 점이 삭제됩니다. 계속하시겠습니까?",
         lessonTitle: "태극 1장: 학습 시범", lessonSafety: "보호자와 지도자와 함께 안전한 공간에서 연습하세요. 검증되지 않은 시범으로 기술을 평가하지 않습니다. 지도자에게 지시 사항을 확인하세요.", lessonMirror: "지도자 스켈레톤은 좌우 반전됩니다. 지시의 왼쪽과 오른쪽은 수련자 본인의 신체 기준입니다.", studentView: "카메라로 감지한 내 스켈레톤", instructorView: "지도자 기준 동작 (거울)", lessonPrevious: "이전", lessonRepeat: "지시 반복", lessonNext: "다음", lessonVoice: "음성", lessonImport: "사용 허가를 받은 기준 점 JSON 불러오기", lessonPlay: "기준 동작 재생", lessonPause: "기준 동작 일시정지", lessonPrivacy: "카메라 프레임은 기기에서 처리되고 기준 데이터는 메모리에 유지됩니다. 분석 측정값은 메모리에 보관되며 요청할 때만 내보냅니다. 영상이나 좌표는 업로드하지 않습니다.",
@@ -217,6 +227,11 @@
     };
     const languageSelect = document.getElementById("language");
     Object.assign(translations.en, {
+      localSaveNote: "Optional: send the captured body points to your private PC over this local HTTPS connection. Video and audio are not sent. Use only with permission; anyone with access to the PC's recording folder can read them.",
+      localSaveCode: "PC access code", localSave: "Save points to this PC", localSaving: "Saving to the PC…", localSaved: "Saved on the PC:", localFailed: "Save failed. Check the code, connection and PC server. Points remain on this device.",
+      localAutoSave: "Automatically save points to this PC after capture stops (keep this page open until saved).",
+      localFinishFirst: "Stop capture and wait for the PC save before changing the source or clearing data.",
+      lessonPrivacy: "Camera frames are processed locally. Reference points and measurements stay in memory. Points can be exported or explicitly saved to your PC when using the local server; video is never uploaded.",
       poomsaePlayback: "Open 3D Poomsae playback (export points first)",
       fullBodyNote: "For 3D Poomsae playback, capture the whole body from head to feet throughout the entire form. Point capture stores all 33 estimated landmarks at up to 24 samples per second for up to 120 seconds. Kick CSV and kick JSON are separate exports, not full-body recordings.",
       bodyUnknown: "Start the camera or play a video to check body visibility.", bodyVisible: "Head, arms and legs appear visible. Keep the whole movement path in frame.", bodyMissing: "Some head, arm or leg points are missing, uncertain or outside the image. Adjust the camera; captured points may be incomplete.",
@@ -224,6 +239,11 @@
       clapRequest: "Waiting for microphone permission…", clapWaiting: "Listening for two claps; use Stop to cancel.", clapFirst: "First sound detected — clap once more.", clapReset: "Two claps detected. Refreshing pose tracking; wait for recording.", clapFailed: "Microphone or pose refresh failed. Try again or use manual start.", clapCancelled: "Clap start cancelled. Existing points were kept."
     });
     Object.assign(translations.pl, {
+      localSaveNote: "Opcjonalnie: wyślij przechwycone punkty ciała na swój prywatny komputer przez lokalne połączenie HTTPS. Wideo i dźwięk nie są wysyłane. Używaj za zgodą; osoby z dostępem do folderu nagrań na komputerze mogą je odczytać.",
+      localSaveCode: "Kod dostępu do komputera", localSave: "Zapisz punkty na komputerze", localSaving: "Zapisywanie na komputerze…", localSaved: "Zapisano na komputerze:", localFailed: "Zapis nie powiódł się. Sprawdź kod, połączenie i serwer na komputerze. Punkty pozostają na tym urządzeniu.",
+      localAutoSave: "Automatycznie zapisuj punkty na komputerze po zatrzymaniu nagrania (nie zamykaj strony przed potwierdzeniem zapisu).",
+      localFinishFirst: "Zatrzymaj nagrywanie i poczekaj na zapis na komputerze przed zmianą źródła lub usunięciem danych.",
+      lessonPrivacy: "Klatki z kamery są przetwarzane lokalnie. Punkty i pomiary pozostają w pamięci. Punkty można wyeksportować lub świadomie zapisać na komputerze przez serwer lokalny; wideo nie jest wysyłane.",
       poomsaePlayback: "Otwórz odtwarzanie Poomsae 3D (najpierw wyeksportuj punkty)",
       fullBodyNote: "Do odtwarzania Poomsae 3D ustaw całą sylwetkę od głowy do stóp w kadrze przez cały układ. Przechwytywanie zapisuje 33 szacowane punkty do 24 razy na sekundę przez maksymalnie 120 sekund. CSV i JSON kopnięć są osobnymi eksportami, nie nagraniem całego ciała.",
       bodyUnknown: "Uruchom kamerę lub odtwórz film, aby sprawdzić widoczność sylwetki.", bodyVisible: "Głowa, ręce i nogi są prawdopodobnie widoczne. Utrzymaj całą trasę ruchu w kadrze.", bodyMissing: "Niektórych punktów głowy, rąk lub nóg brakuje, są niepewne albo poza kadrem. Ustaw kamerę; nagrane punkty mogą być niekompletne.",
@@ -231,6 +251,11 @@
       clapRequest: "Oczekiwanie na zgodę na mikrofon…", clapWaiting: "Nasłuchiwanie dwóch klaśnięć; przyciskiem Stop możesz anulować.", clapFirst: "Wykryto pierwszy dźwięk — klaśnij ponownie.", clapReset: "Wykryto dwa klaśnięcia. Odświeżanie śledzenia pozy; zaczekaj na nagrywanie.", clapFailed: "Nie udało się uruchomić mikrofonu lub odświeżyć śledzenia. Spróbuj ponownie albo użyj startu ręcznego.", clapCancelled: "Anulowano start po klaśnięciach. Zachowano poprzednie punkty."
     });
     Object.assign(translations.ko, {
+      localSaveNote: "선택 사항: 기록한 신체 점을 로컬 HTTPS 연결로 개인 PC에 보냅니다. 영상과 소리는 전송하지 않습니다. 동의를 받은 경우에만 사용하세요. PC의 기록 폴더에 접근할 수 있는 사람은 파일을 읽을 수 있습니다.",
+      localSaveCode: "PC 접근 코드", localSave: "PC에 점 저장", localSaving: "PC에 저장 중…", localSaved: "PC에 저장됨:", localFailed: "저장하지 못했습니다. 코드, 연결과 PC 서버를 확인하세요. 점은 이 기기에 남아 있습니다.",
+      localAutoSave: "기록이 중지되면 점을 PC에 자동 저장합니다 (저장 확인까지 페이지를 열어 두세요).",
+      localFinishFirst: "소스를 변경하거나 데이터를 지우기 전에 기록을 중지하고 PC 저장을 기다리세요.",
+      lessonPrivacy: "카메라 프레임은 기기에서 처리됩니다. 점과 측정값은 메모리에 남습니다. 로컬 서버에서 점을 내보내거나 명시적으로 PC에 저장할 수 있으며 영상은 전송하지 않습니다.",
       poomsaePlayback: "3D 품새 재생 열기 (먼저 점 내보내기)",
       fullBodyNote: "3D 품새 재생을 위해 전체 동작 동안 머리부터 발끝까지 화면에 담으세요. 추정된 33개 점을 최대 초당 24회, 최대 120초 동안 기록합니다. 발차기 CSV와 JSON은 전신 기록이 아닙니다.",
       bodyUnknown: "카메라나 영상을 시작하여 전신 가시성을 확인하세요.", bodyVisible: "머리, 팔, 다리가 보이는 것으로 추정됩니다. 전체 이동 경로를 화면에 담으세요.", bodyMissing: "머리, 팔 또는 다리의 일부 점이 없거나 불확실하거나 화면 밖에 있습니다. 카메라를 조정하세요. 기록이 불완전할 수 있습니다.",
@@ -419,6 +444,17 @@
     const MAX_SKELETON_SECONDS = 120;
     const MAX_SKELETON_FRAMES = 3600;
     const SKELETON_SAMPLE_INTERVAL = 1 / 24;
+    let localAvailable = false, localSaving = false, localStatus = "", localFilename = "";
+    if (location.protocol === "https:" && /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname)) {
+      fetch("/api/local-server", { cache: "no-store" }).then(async (response) => {
+        if (!response.ok) throw new Error(`Local server unavailable: ${response.status}`);
+        const info = await response.json();
+        if (info.available !== true) throw new Error("Unrecognized local server");
+        localAvailable = true;
+        $("localSavePanel").hidden = false;
+        renderSkeleton();
+      }).catch((error) => console.error("Could not check the local recording server.", error));
+    }
     const clap = { phase: "idle", generation: 0, microphone: null, context: null, raf: 0 };
 
     function releaseMicrophone() {
@@ -439,6 +475,8 @@
     }
 
     function beginSkeleton() {
+      localStatus = "";
+      localFilename = "";
       skeleton.frames = [];
       skeleton.start = stream ? performance.now() / 1000 : video.currentTime;
       skeleton.last = skeleton.start;
@@ -548,12 +586,17 @@
     function renderSkeleton() {
       $("skeletonStatus").textContent = `${t(skeleton.status)} (${skeleton.frames.length})`;
       $("bodyVisibility").textContent = t(skeleton.visibility);
-      const busy = skeleton.recording || clap.phase !== "idle";
+      const busy = skeleton.recording || clap.phase !== "idle" || localSaving;
       $("skeletonStart").disabled = busy || !landmarker || video.readyState < 2 || video.paused;
       $("clapStart").disabled = busy || !stream || !landmarker || video.readyState < 2 || video.paused;
       $("skeletonStop").disabled = !busy;
       $("skeletonExport").disabled = busy || !skeleton.frames.length;
       $("skeletonClear").disabled = busy || !skeleton.frames.length;
+      $("localSave").disabled = busy || localSaving || !localAvailable || !skeleton.frames.length;
+      $("cam").disabled = localSaving || !landmarker;
+      $("file").disabled = localSaving;
+      $("reset").disabled = localSaving;
+      $("localSaveStatus").textContent = localStatus ? `${t(localStatus)}${localFilename ? ` ${localFilename}` : ""}` : "";
     }
 
     function finishSkeleton(reason = "skeletonDone") {
@@ -561,6 +604,7 @@
       skeleton.recording = false;
       skeleton.status = skeleton.frames.length ? reason : "skeletonEmpty";
       renderSkeleton();
+      if (localAvailable && $("localAutoSave").checked && skeleton.frames.length) void saveToLocal();
     }
 
     function clearSkeleton() {
@@ -568,6 +612,8 @@
       skeleton.recording = false;
       skeleton.frames = [];
       skeleton.status = "skeletonIdle";
+      localStatus = "";
+      localFilename = "";
       renderSkeleton();
     }
 
@@ -603,15 +649,47 @@
       else finishSkeleton();
     });
     $("skeletonClear").addEventListener("click", clearSkeleton);
-    $("skeletonExport").addEventListener("click", () => {
-      if (!skeleton.frames.length || skeleton.recording) return;
-      download("pose-landmarks.json", JSON.stringify({
+    function skeletonData() {
+      return {
         format: "kickit-pose-landmarks",
         version: 1,
         model: "MediaPipe Pose Landmarker Full",
         coordinates: { landmarks: "normalized image coordinates", worldLandmarks: "estimated world coordinates in meters" },
         frames: skeleton.frames
-      }, null, 2), "application/json");
+      };
+    }
+    $("skeletonExport").addEventListener("click", () => {
+      if (!skeleton.frames.length || skeleton.recording) return;
+      download("pose-landmarks.json", JSON.stringify(skeletonData(), null, 2), "application/json");
+    });
+    async function saveToLocal() {
+      if (!localAvailable || localSaving || skeleton.recording || clap.phase !== "idle" || !skeleton.frames.length) return;
+      localSaving = true;
+      localStatus = "localSaving";
+      localFilename = "";
+      renderSkeleton();
+      try {
+        const response = await fetch("/api/recordings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-KickIt-Code": $("localSaveCode").value.trim() },
+          body: JSON.stringify(skeletonData())
+        });
+        if (!response.ok) throw new Error(`Local save failed: ${response.status}`);
+        const result = await response.json();
+        if (typeof result.file !== "string" || !/^pose-landmarks-[a-zA-Z0-9-]+\.json$/.test(result.file)) throw new Error("Unexpected save response");
+        localFilename = result.file;
+        localStatus = "localSaved";
+      } catch (error) {
+        console.error("Could not save points to the local PC.", error);
+        localStatus = "localFailed";
+      } finally {
+        localSaving = false;
+        renderSkeleton();
+      }
+    }
+    $("localSave").addEventListener("click", saveToLocal);
+    window.addEventListener("beforeunload", (event) => {
+      if (localSaving) { event.preventDefault(); event.returnValue = ""; }
     });
     video.addEventListener("play", renderSkeleton);
     video.addEventListener("loadeddata", renderSkeleton);
@@ -794,6 +872,12 @@
     $("file").addEventListener("change", (e) => {
       const f = e.target.files[0];
       if (!f) return;
+      if (skeleton.recording && localAvailable && $("localAutoSave").checked) {
+        e.target.value = "";
+        renderFileName();
+        window.alert(t("localFinishFirst"));
+        return;
+      }
       if ((skeleton.recording || skeleton.frames.length) && !window.confirm(t("skeletonReplace"))) {
         e.target.value = "";
         renderFileName();
@@ -806,6 +890,7 @@
     });
     $("rate").addEventListener("change", () => { video.playbackRate = Number($("rate").value); });
     $("cam").addEventListener("click", async () => {
+      if (skeleton.recording && localAvailable && $("localAutoSave").checked) { window.alert(t("localFinishFirst")); return; }
       if ((skeleton.recording || skeleton.frames.length) && !window.confirm(t("skeletonReplace"))) return;
       try {
         stopStream(); resetAnalysis();
@@ -839,6 +924,7 @@
       if (document.hidden) cancelClapOnHide();
     });
     $("reset").addEventListener("click", () => {
+      if (skeleton.recording && localAvailable && $("localAutoSave").checked) { window.alert(t("localFinishFirst")); return; }
       if ((skeleton.recording || skeleton.frames.length) && !window.confirm(t("skeletonReplace"))) return;
       resetAnalysis();
     });
@@ -847,8 +933,11 @@
     function download(name, text, type) {
       const a = document.createElement("a");
       const url = URL.createObjectURL(new Blob([text], { type }));
+      const stamp = new Date().toISOString().replace(/[-:.]/g, "");
+      const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, "0")).join("");
+      const extension = name.lastIndexOf(".");
       a.href = url;
-      a.download = name; a.click();
+      a.download = `${name.slice(0, extension)}-${stamp}-${id}${name.slice(extension)}`; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     }
     $("exportJson").addEventListener("click", () => {
